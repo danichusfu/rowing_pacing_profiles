@@ -83,61 +83,7 @@ parse_gps <- function(gps_file_name){
   return(gps_parsed)
 }
 
-parse_c73 <- function(c73_file_name){
-  
-  if(is.na(c73_file_name)){
-    return(tibble(rank_final  = double(), 
-                  lane        = double(), 
-                  team        = character(), 
-                  progression = character()
-                  )
-    )
-  }
-  
-  possible_progressions <-
-    c("\\(\\d{1,2}\\)",
-      "FA",
-      "FB",
-      "FC",
-      "FD",
-      "FE",
-      "FF",
-      "FG",
-      "FH",
-      "R",
-      "ELM",
-      "DNS",
-      "SA/B",
-      "SC/D",
-      "Q")
-  possible_progressions <- paste0("^", possible_progressions, "$") %>% glue_collapse("|")
-  rank_lane_team_reg_ex <- "^[[:alnum:]]{1} [[:alnum:]]{1,2} [[:alnum:]]{3}"
-  
-  keeper_reg_ex <- glue("{possible_progressions}|{rank_lane_team_reg_ex}")
-  
-  c73_info <-
-    extract_text(c73_file_name) %>% 
-    str_split('\r\n') %>% 
-    unlist() %>% 
-    as_tibble() %>%
-    filter(row_number() > 7) %>%
-    filter(str_detect(value, keeper_reg_ex))
-  
-  progressions <- c73_info %>% filter(row_number() %% 2 == 0) %>% rename(progression = value)
-  race_splits  <- c73_info %>% filter(row_number() %% 2 == 1)
-  
-  reg_ex_for_name <- glue("(?<={rank_lane_team_reg_ex})[^\\d]+(?= \\d)")
-  
-  results_parsed <-
-    race_splits %>%
-    mutate(rank_final = word(value, 1) %>% parse_number(),
-           lane       = word(value, 2) %>% parse_number(),
-           team       = word(value, 3)) %>%
-    select(-value) %>%
-    bind_cols(progressions)
-  
-  return(results_parsed)
-}
+
 
 parse_c51a <- function(c51a_file_name){
   
@@ -229,5 +175,71 @@ parse_c51a <- function(c51a_file_name){
              birthday = dmy(birthday))
     return(start_list_parsed)
   }
+}
+
+
+parse_c73 <- function(c73_file_name){
+  
+  if(is.na(c73_file_name)){
+    return(tibble(rank_final  = double(), 
+                  lane        = double(), 
+                  team        = character(), 
+                  progression = character()
+    )
+    )
+  }
+  
+  possible_progressions <-
+    c("\\(\\d{1,2}\\)",
+      "FA",
+      "FB",
+      "FC",
+      "FD",
+      "FE",
+      "FF",
+      "FG",
+      "FH",
+      "R",
+      "ELM",
+      "SA/B",
+      "SC/D",
+      "SE/F",
+      "S[[:upper:]]///[[:upper:]]",
+      "Q",
+      "F",
+      "(1) WB",
+      "Q WB"
+    )
+  
+  possible_progressions <- paste0("^", possible_progressions, "($| WB$)") %>% glue_collapse("|")
+  rank_lane_team_reg_ex <- "^[[:alnum:]]{1} [[:alnum:]]{1,2} [[:alnum:]]{3}"
+  
+  c73_info <-
+    extract_text(c73_file_name) %>% 
+    str_replace('DNS', 'STR_TO_FIND_LINE STR_TO_SPLIT_ON') %>%
+    str_split('(\r\n|STR_TO_SPLIT_ON )') %>% 
+    unlist() %>% 
+    as_tibble() %>%
+    mutate(value = str_squish(value)) %>%
+    filter(row_number() > 7) %>%
+    filter(# either its a progression value which is always preceded by a split time
+      str_detect(value, possible_progressions) & str_detect(lag(value), "\\d\\.\\d{2}|STR_TO_FIND_LINE") |
+        # or it is the line that has the rank lane and team information
+        str_detect(value, rank_lane_team_reg_ex))
+  
+  progressions <- c73_info %>% filter(row_number() %% 2 == 0) %>% rename(progression = value)
+  race_splits  <- c73_info %>% filter(row_number() %% 2 == 1)
+  
+  reg_ex_for_name <- glue("(?<={rank_lane_team_reg_ex})[^\\d]+(?= \\d)")
+  
+  results_parsed <-
+    race_splits %>%
+    mutate(rank_final = word(value, 1) %>% parse_number(),
+           lane       = word(value, 2) %>% parse_number(),
+           team       = word(value, 3)) %>%
+    select(-value) %>% 
+  bind_cols(progressions)
+  
+  return(results_parsed)
 }
 

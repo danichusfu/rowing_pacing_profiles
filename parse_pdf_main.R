@@ -31,7 +31,10 @@ files_nested <-
   nest(-race_id)
 
 files_nested %>%
-  mutate(c51a_parsed = map(data, ~ parse_c51a(.$c51a)))
+  mutate(#c51a_parsed = map(data, ~ parse_c51a(.$c51a)),
+         c73_parsed   = map(data, ~ parse_c73(.$c73))) %>%
+  View()
+
 
 
 parse_gps(gps_file_name)
@@ -41,8 +44,12 @@ parse_c51a(c51a_file_name)
 
 
 gps_file_name <- "scraped_pdfs/2014_world_championships/ROM012101_MGPS.pdf"
+
 c73_file_name <- "scraped_pdfs/2014_world_championships/ROM012101_C73.pdf"
 c73_file_name <- "scraped_pdfs/2014_world_championships/ROXT22902_C73.pdf"
+c73_file_name <- "scraped_pdfs/2014_world_championships/ROXF43902_C73.pdf"
+c73_file_name <- "scraped_pdfs/2014_world_championships/ROM112104_C73.pdf"
+
 c51a_file_name <- "scraped_pdfs/2014_world_championships/ROM012101_C51A.pdf"
 c51a_file_name <- "scraped_pdfs/2014_world_championships/ROXT22902_C51A.pdf"
 c51a_file_name <- "scraped_pdfs/2014_world_championships/ROM041101_C51A.pdf"

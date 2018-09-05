@@ -1,5 +1,5 @@
 # extract race information from GPS pdf
-extract_race_information_gps <- function(gps_pdf_path){
+extract_race_information_gps <- function(gps_file_name){
   
   # list of common lines of text in the gps pdf
   # to remove before extracting information
@@ -19,7 +19,7 @@ extract_race_information_gps <- function(gps_pdf_path){
   
   
   race_info <-
-    extract_text(gps_pdf_path) %>%
+    extract_text(gps_file_name) %>%
     str_split('\r\n') %>%
     unlist() %>%
     as_tibble() %>%
@@ -34,11 +34,13 @@ extract_race_information_gps <- function(gps_pdf_path){
   teams <- 
     race_info[7] %>%
     str_split(' ') %>% 
-    unlist() %>% 
-    paste(1:6, sep = "_") %>% 
+    unlist()
+  teams_lane <-
+    teams %>%
+    paste(1:length(teams), sep = "_") %>% 
     rep(each = 2) 
   vars <- c("speed", "strokes")
-  col_names <- c("distance", paste(teams, vars, sep = "_"))
+  col_names <- c("distance", paste(teams_lane, vars, sep = "_"))
   
   
   
@@ -64,21 +66,27 @@ extract_race_information_gps <- function(gps_pdf_path){
 }
 
 extract_gps_data <- function(gps_file_name, col_names){
+  num_cols <-length(col_names)
   speed_strokes <- 
     extract_tables(gps_file_name)[[1]] %>%
     as_tibble() %>%
     filter_all(any_vars(str_detect(., "\\d"))) %>%
+    select(1:num_cols) %>%
     rename_all(~ col_names) %>%
     gather(team_lane_measurement_type, measurement, -distance) %>%
-    separate(team_lane_measurement_type, into = c("team", "lane", "meaurement_type"), sep = "_") 
+    separate(team_lane_measurement_type, into = c("team", "lane", "measurement_type"), sep = "_")
 }
 
 parse_gps <- function(gps_file_name){
   race_info <- extract_race_information_gps(gps_file_name)
   col_names <- race_info %>% pull(col_names) %>% unlist()
   race_info <- race_info %>% select(race_info_final) %>% unnest()
-  gps_data  <- extract_gps_data(gps_file_name, col_names)
-  gps_parsed <- tibble(race_info = list(race_info), gps_data = list(gps_data)) 
+  gps_data  <- tibble(gps_data = list(extract_gps_data(gps_file_name, col_names)))
+  gps_parsed <- bind_cols(race_info, gps_data)
+  gps_parsed <- 
+    gps_parsed %>% 
+    unnest() %>%
+    mutate_at(vars(c("lane", "event_num", "distance", "measurement")), parse_number)
   
   return(gps_parsed)
 }
@@ -241,5 +249,68 @@ parse_c73 <- function(c73_file_name){
   bind_cols(progressions)
   
   return(results_parsed)
+}
+
+
+separate_name_birthday_cols <- function(data){
+  data %>%
+    separate(single, c("single_birthday", "single_name"), sep = "_") %>%
+    separate(second, c("second_birthday", "second_name"), sep = "_") %>% 
+    separate(third, c("third_birthday", "third_name"), sep = "_") %>%
+    separate(fourth, c("fourth_birthday", "fourth_name"), sep = "_") %>% 
+    separate(fifth, c("fifth_birthday", "fifth_name"), sep = "_") %>%
+    separate(sixth, c("sixth_birthday", "sixth_name"), sep = "_") %>% 
+    separate(seventh, c("seventh_birthday", "seventh_name"), sep = "_") %>%
+    separate(stroke, c("stroke_birthday", "stroke_name"), sep = "_") %>% 
+    separate(bow, c("bow_birthday", "bow_name"), sep = "_") %>%
+    separate(coxswain, c("coxswain_birthday", "coxswain_name"), sep = "_") 
+}
+
+parse_files_for_year <- function(directory){
+  file_name <- list.files(directory)
+  files     <- tibble(file_name)
+  files_nested <- 
+    files %>% 
+    mutate(race_id   = str_extract(file_name, ".+(?=_)"),
+           file_type = str_extract(file_name, "(?<=_).+(?=.pdf)"),
+           file_path = paste0(directory, file_name)
+    ) %>%
+    select(-file_name) %>%
+    spread(file_type, file_path) %>%
+    rename_all(tolower) %>%
+    drop_na(mgps, c73, c51a) %>%
+    nest(-race_id)
+  
+  files_parsed <- 
+    files_nested %>%
+    mutate(c51a_parsed = map(data, ~ parse_c51a(.$c51a)),
+           c73_parsed  = map(data, ~ parse_c73(.$c73)),
+           gps_parsed  = map(data, ~ parse_gps(.$mgps)))
+  
+  files_joined <-
+    files_parsed %>%
+    mutate(data_joined = map2(c51a_parsed, c73_parsed, ~ full_join(.x, .y, by = c("team", "lane"))),
+           data_joined = map2(data_joined, gps_parsed, ~ full_join(.x, .y, by = c("team", "lane"))))
+  
+  files_cleaned <-
+    files_joined %>%
+    select(race_id, data_joined) %>%
+    unnest() %>%
+    mutate(position = case_when(position == "(2)" ~ "second",
+                                position == "(3)" ~ "third",
+                                position == "(4)" ~ "fourth",
+                                position == "(5)" ~ "fifth",
+                                position == "(6)" ~ "sixth",
+                                position == "(7)" ~ "seventh",
+                                position == "(s)" ~ "stroke",
+                                position == "(b)" ~ "bow",
+                                position == "(c)" ~ "coxswain",
+                                position == "single" ~ "single")) %>%
+    unite("name_birthday", name, birthday) %>%
+    spread(position, name_birthday) %>%
+    separate_name_birthday_cols()
+  
+  return(files_cleaned)
+  
 }
 

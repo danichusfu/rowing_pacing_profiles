@@ -15,13 +15,16 @@
 pacman::p_load(tidyverse, glue, lubridate, devtools, remotes, rJava, tabulizer, janitor, splitstackshape)
 source('parse_pdf_functions.R')
 
-directory <- "scraped_pdfs/2014_world_championships/"
+directory <- "scraped_pdfs/2010_world_championships/"
 parse_files_for_year(directory)
 
+directory <- "scraped_pdfs/"
+list.files(directory)
 
-
-
-
+tibble(year = 2010:2018) %>%
+  filter(year == 2010) %>%
+  mutate(year_directory = paste0("scraped_pdfs/", year, "_world_championships/"),
+         data = list(parse_files_for_year(year_directory)))
 
 
 
@@ -47,11 +50,14 @@ gps_file_name <- "scraped_pdfs/2014_world_championships/ROM012205_MGPS.pdf"
 
 c73_file_name <- "scraped_pdfs/2014_world_championships/ROM012205_C73.pdf"
 c73_file_name <- "scraped_pdfs/2014_world_championships/ROXT22902_C73.pdf"
-c73_file_name <- "scraped_pdfs/2014_world_championships/ROXF43902_C73.pdf"
-c73_file_name <- "scraped_pdfs/2014_world_championships/ROM112104_C73.pdf"
 
-c51a_file_name <- "scraped_pdfs/2014_world_championships/ROM012205_C51A.pdf"
-c51a_file_name <- "scraped_pdfs/2014_world_championships/ROXT22902_C51A.pdf"
+c73_file_name <- "scraped_pdfs/2010_world_championships/ROM012101_C73.pdf"
+c73_file_name <- "scraped_pdfs/2010_world_championships/ROM012104_C73.pdf"
+
+
+c51a_file_name <- "scraped_pdfs/2010_world_championships/ROM012101_C51A.pdf"
+c51a_file_name <- "scraped_pdfs/2014_world_championships/ROW042101_C51A.pdf"
+
 c51a_file_name <- "scraped_pdfs/2014_world_championships/ROM041101_C51A.pdf"
-c51a_file_name <- "scraped_pdfs/2014_world_championships/ROW042102_C51A.pdf"
+c51a_file_name <- "scraped_pdfs/2014_world_championships/ROM012101_C51A.pdf"
 

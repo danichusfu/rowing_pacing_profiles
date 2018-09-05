@@ -124,8 +124,9 @@ parse_c51a <- function(c51a_file_name){
   }
   
   # regualr expressions for filtering relevant information
-  lane_team_position_reg_ex <- "^\\d{1} [[:alpha:]]{3} \\([[:alnum:]]{1}\\)"
-  lane_team_reg_ex          <- "^\\d{1} [[:alpha:]]{3}"
+  lane_team_position_reg_ex               <- "^\\d{1} [[:alpha:]]{3} \\([[:alnum:]]{1}\\)"
+  lane_team_position_name_birthday_reg_ex <- "^\\d{1} [[:alpha:]]{3} \\([[:alnum:]]{1}\\) .+ \\d{2} [[:alpha:]]{3} \\d{4}$"
+  lane_team_reg_ex                        <- "^\\d{1} [[:alpha:]]{3}"
   
   c51a_info <-
     extract_text(c51a_file_name) %>%
@@ -133,13 +134,17 @@ parse_c51a <- function(c51a_file_name){
     unlist() %>% 
     as_tibble() %>%
     mutate(new_team = str_detect(value, lane_team_position_reg_ex),
-           team_num = cumsum(new_team))
-  
-  if(max(c51a_info$team_num) == 0){
+           team_num = cumsum(new_team),
+           # in 2010 a position is included with the single boats
+           # this finds if this is the case
+           pos_incl = str_detect(value, lane_team_position_name_birthday_reg_ex))
+ 
+  if(max(c51a_info$team_num) == 0 | max(c51a_info$pos_incl) > 0){
     
     start_list_parsed <-
       c51a_info %>%
       filter(str_detect(value, lane_team_reg_ex)) %>%
+      mutate(value = str_remove(value, "\\([[:alnum:]]{1}\\)") %>% str_squish()) %>%
       select(value) %>%
       mutate(lane     = str_extract(value, "^\\d{1}") %>% parse_number(),
              team     = str_extract(value, "(?<=^\\d{1} )[[:alpha:]]{3}"),
@@ -172,7 +177,7 @@ parse_c51a <- function(c51a_file_name){
     names               <- c51a_info %>% filter(str_detect(value, "^[[:alpha:]]"))                 %>% rename(name = value)
     birthdays           <- c51a_info %>% filter(str_detect(value, "\\d{2} [[:alpha:]]{3} \\d{4}")) %>% rename(birthday = value)
     
-    #return(nrow(lane_team_positions) == nrow(names) & nrow(names) == nrow(birthdays))
+    # return(nrow(lane_team_positions) == nrow(names) & nrow(names) == nrow(birthdays))
     
     start_list_parsed <-
       lane_team_positions %>%
@@ -222,6 +227,7 @@ parse_c73 <- function(c73_file_name){
   possible_progressions <- paste0("^", possible_progressions, "($| WB$)") %>% glue_collapse("|")
   rank_lane_team_reg_ex <- "^[[:alnum:]]{1} [[:alnum:]]{1,2} [[:alnum:]]{3}"
   
+  
   c73_info <-
     extract_text(c73_file_name) %>% 
     str_replace('DNS', 'STR_TO_FIND_LINE STR_TO_SPLIT_ON') %>%
@@ -235,17 +241,23 @@ parse_c73 <- function(c73_file_name){
         # or it is the line that has the rank lane and team information
         str_detect(value, rank_lane_team_reg_ex))
   
-  progressions <- c73_info %>% filter(row_number() %% 2 == 0) %>% rename(progression = value)
-  race_splits  <- c73_info %>% filter(row_number() %% 2 == 1)
+  
+  race_splits  <- c73_info %>% filter(str_detect(value, rank_lane_team_reg_ex))
+  progressions <- c73_info %>% filter(str_detect(value, possible_progressions)) %>% rename(progression = value)
+  if(nrow(progressions)  == 0){
+    progressions <- tibble(progression = rep("final_race", nrow(race_splits)))
+  }
   
   reg_ex_for_name <- glue("(?<={rank_lane_team_reg_ex})[^\\d]+(?= \\d)")
+  
+  # return(nrow(progressions) == nrow(race_splits))
   
   results_parsed <-
     race_splits %>%
     mutate(rank_final = word(value, 1) %>% parse_number(),
            lane       = word(value, 2) %>% parse_number(),
            team       = word(value, 3)) %>%
-    select(-value) %>% 
+    select(-value) %>%
   bind_cols(progressions)
   
   return(results_parsed)
@@ -283,8 +295,8 @@ parse_files_for_year <- function(directory){
   
   files_parsed <- 
     files_nested %>%
-    mutate(c51a_parsed = map(data, ~ parse_c51a(.$c51a)),
-           c73_parsed  = map(data, ~ parse_c73(.$c73)),
+    mutate(#c51a_parsed = map(data, ~ parse_c51a(.$c51a)),
+           #c73_parsed  = map(data, ~ parse_c73(.$c73)),
            gps_parsed  = map(data, ~ parse_gps(.$mgps)))
   
   files_joined <-

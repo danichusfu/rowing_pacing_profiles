@@ -21,7 +21,7 @@ library(multidplyr)
 pacman::p_load(parallel)
 source('parse_pdf_functions.R')
 
-directory <- "scraped_pdfs/2011_world_championships/"
+directory <- "scraped_pdfs/2010_world_championships/"
 #parse_files_for_year(directory)
 
 #directory <- "scraped_pdfs/"
@@ -54,7 +54,7 @@ c73_file_name <- "scraped_pdfs/2010_world_championships/ROM012104_C73.pdf"
 c51a_file_name <- "scraped_pdfs/2010_world_championships/ROM012101_C51A.pdf"
 c51a_file_name <- "scraped_pdfs/2014_world_championships/ROW042101_C51A.pdf"
 
-c51a_file_name <- "scraped_pdfs/2011_world_championships/ROM022203_C51A.pdf"
+c51a_file_name <- "scraped_pdfs/2011_world_championships/ROM023102_C51A.pdf"
 c51a_file_name <- "scraped_pdfs/2014_world_championships/ROM012101_C51A.pdf"
 
 

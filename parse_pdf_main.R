@@ -21,7 +21,7 @@ library(multidplyr)
 pacman::p_load(parallel)
 source('parse_pdf_functions.R')
 
-directory <- "scraped_pdfs/2010_world_championships/"
+directory <- "scraped_pdfs/2011_world_championships/"
 #parse_files_for_year(directory)
 
 #directory <- "scraped_pdfs/"
@@ -42,19 +42,9 @@ parse_c51a(c51a_file_name)
 
 
 gps_file_name <- "scraped_pdfs/2014_world_championships/ROM012101_MGPS.pdf"
-gps_file_name <- "scraped_pdfs/2010_world_championships/ROM012104_MGPS.pdf"
 
-c73_file_name <- "scraped_pdfs/2014_world_championships/ROM012205_C73.pdf"
-c73_file_name <- "scraped_pdfs/2014_world_championships/ROXT22902_C73.pdf"
+c73_file_name <- "scraped_pdfs/2011_world_championships/ROMA12201_C73.pdf"
 
-c73_file_name <- "scraped_pdfs/2010_world_championships/ROM012101_C73.pdf"
-c73_file_name <- "scraped_pdfs/2010_world_championships/ROM012104_C73.pdf"
-
-
-c51a_file_name <- "scraped_pdfs/2010_world_championships/ROM012101_C51A.pdf"
-c51a_file_name <- "scraped_pdfs/2014_world_championships/ROW042101_C51A.pdf"
-
-c51a_file_name <- "scraped_pdfs/2011_world_championships/ROM023102_C51A.pdf"
 c51a_file_name <- "scraped_pdfs/2014_world_championships/ROM012101_C51A.pdf"
 
 
@@ -109,6 +99,6 @@ time_elapsed_series <- proc.time() - start # End clock
 start <- proc.time() # Start clock
 all_years_parsed <- 
   championship_by_year %>%
-  filter(year %in% 2014) %>%
+  filter(year %in% 2010:2011) %>%
   mutate(data = list(parse_files_for_year(year_directory)))
 time_elapsed_series <- proc.time() - start # End clock

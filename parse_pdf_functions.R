@@ -271,32 +271,34 @@ parse_c73 <- function(c73_file_name){
     )
   
   possible_progressions <- paste0("^", possible_progressions, "($| WB$)") %>% glue_collapse("|")
-  rank_lane_team_reg_ex <- "^[[:alnum:]]{1} [[:alnum:]]{1,2} [[:alnum:]]{3}"
+  # sometimes rank is missing if they did not start
+  lane_team_reg_ex <- "[[:alnum:]]{1,2} [[:upper:]]{3}"
   
   
   c73_info <-
     extract_text(c73_file_name) %>% 
-    str_replace('DNS', 'STR_TO_FIND_LINE STR_TO_SPLIT_ON') %>%
+    str_replace_all('DNS', 'STR_TO_FIND_LINE STR_TO_SPLIT_ON') %>%
     str_split('(\r\n|STR_TO_SPLIT_ON )') %>% 
     unlist() %>% 
     as_tibble() %>%
     mutate(value = str_squish(value)) %>%
     filter(row_number() > 7) %>%
+    filter(!str_detect(value, "Report Created|World Champion")) %>%
     filter(# either its a progression value which is always preceded by a split time
       str_detect(value, possible_progressions) & str_detect(lag(value), "\\d\\.\\d{2}|STR_TO_FIND_LINE") |
-        # or it is the line that has the rank lane and team information
-        str_detect(value, rank_lane_team_reg_ex))
+        # or it is the line that has thelane and team information
+        str_detect(value, lane_team_reg_ex))
   
   
-  race_splits  <- c73_info %>% filter(str_detect(value, rank_lane_team_reg_ex))
+  race_splits  <- c73_info %>% filter(str_detect(value, lane_team_reg_ex))
   progressions <- c73_info %>% filter(str_detect(value, possible_progressions)) %>% rename(progression = value)
-  if(nrow(progressions)  == 0){
+  if(nrow(progressions) == 0){
     progressions <- tibble(progression = rep("final_race", nrow(race_splits)))
   }
   
   reg_ex_for_name <- glue("(?<={rank_lane_team_reg_ex})[^\\d]+(?= \\d)")
   
-  # return(nrow(progressions) == nrow(race_splits))
+  return(nrow(progressions) == nrow(race_splits))
   
   results_parsed <-
     race_splits %>%
@@ -341,8 +343,8 @@ parse_files_for_year <- function(directory){
   
   files_parsed <- 
     files_nested %>%
-    mutate(c51a_parsed = map(data, ~ parse_c51a(.$c51a)))#,
-           c73_parsed  = map(data, ~ parse_c73(.$c73)),
+    mutate(#c51a_parsed = map(data, ~ parse_c51a(.$c51a)),
+           c73_parsed  = map(data, ~ parse_c73(.$c73)))#,
            gps_parsed  = map(data, ~ parse_gps(.$mgps)))
   
   files_joined <-

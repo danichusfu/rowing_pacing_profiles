@@ -12,7 +12,7 @@
 # https://github.com/ropensci/tabulizer#installing-java-on-windows-with-chocolatey 
 
 
-pacman::p_load(tidyverse, glue, lubridate, devtools, remotes, rJava, tabulizer, janitor, splitstackshape)
+pacman::p_load(tidyverse, glue, lubridate, devtools, remotes, rJava, tabulizer)
 source('parse_pdf_functions.R')
 
 directory <- "scraped_pdfs/2010_world_championships/"
@@ -46,7 +46,7 @@ parse_c51a(c51a_file_name)
 
 
 gps_file_name <- "scraped_pdfs/2014_world_championships/ROM012101_MGPS.pdf"
-gps_file_name <- "scraped_pdfs/2014_world_championships/ROM012205_MGPS.pdf"
+gps_file_name <- "scraped_pdfs/2010_world_championships/ROM012104_MGPS.pdf"
 
 c73_file_name <- "scraped_pdfs/2014_world_championships/ROM012205_C73.pdf"
 c73_file_name <- "scraped_pdfs/2014_world_championships/ROXT22902_C73.pdf"

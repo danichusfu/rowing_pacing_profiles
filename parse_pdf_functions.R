@@ -68,13 +68,14 @@ extract_race_information_gps <- function(gps_file_name){
 extract_gps_data <- function(gps_file_name, col_names){
   num_cols <-length(col_names)
   speed_strokes <- 
-    extract_tables(gps_file_name)[[1]] %>%
+    extract_tables(gps_file_name, method = "lattice")[[1]] %>%
     as_tibble() %>%
     filter_all(any_vars(str_detect(., "\\d"))) %>%
     select(1:num_cols) %>%
     rename_all(~ col_names) %>%
     gather(team_lane_measurement_type, measurement, -distance) %>%
     separate(team_lane_measurement_type, into = c("team", "lane", "measurement_type"), sep = "_")
+  return(speed_strokes)
 }
 
 parse_gps <- function(gps_file_name){
@@ -295,8 +296,8 @@ parse_files_for_year <- function(directory){
   
   files_parsed <- 
     files_nested %>%
-    mutate(#c51a_parsed = map(data, ~ parse_c51a(.$c51a)),
-           #c73_parsed  = map(data, ~ parse_c73(.$c73)),
+    mutate(c51a_parsed = map(data, ~ parse_c51a(.$c51a)),
+           c73_parsed  = map(data, ~ parse_c73(.$c73)),
            gps_parsed  = map(data, ~ parse_gps(.$mgps)))
   
   files_joined <-

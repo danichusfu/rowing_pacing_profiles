@@ -108,8 +108,8 @@ parse_c51a <- function(c51a_file_name){
       "Speed",
       "\\[m\\/s\\]",
       "Page",
-      "RACE DATA")
-  
+      "RACE DATA",
+      "Page")
   # make it a regex for str_detect
   exclude_list <- glue_collapse(exclude_list, "|")
   
@@ -165,63 +165,18 @@ parse_c51a <- function(c51a_file_name){
       filter(team_num != 0) %>%
       add_count(team_num) %>%
       add_count(new_team) %>%
-      # hope that in any of the two boat races we are not missing
-      # a birthday
-      mutate(n  = if_else(n == max(n), NA_integer_, n),
-             n  = median(n, na.rm = T),
+      mutate(n  = min(n),
              nn = min(nn)) %>% 
       rename(entries_per_team = n, num_teams = nn) %>%
       filter(!value %in% pre_amble) %>%
       filter(!str_detect(value, "Page \\d")) %>%
       filter(row_number() <= entries_per_team * num_teams) %>%
-      select(value, team_num, num_teams) %>%
-      # if there is a birthday missing than the progression
-      # line will make it in if ther are 2
-      # then the Notes line will as well
-      filter(!str_detect(value, "Progression|NOTES Boats"))
-    
-    
-    lane_team_positions <- 
-      c51a_info %>% 
-      filter(str_detect(value, "\\([[:alnum:]]{1}\\)")) %>%
       select(value)
-    names <- 
-      c51a_info %>% filter(str_detect(value, "^[[:alpha:]]")) %>% 
-      rename(name = value) %>%
-      select(name)
-    birthdays <- 
-      c51a_info %>% 
-      filter(str_detect(value, "\\d{2} [[:alpha:]]{3} \\d{4}")) %>% 
-      complete(team_num = 1:max(num_teams)) %>%
-      add_count(team_num) %>%
-      mutate(num_missing = max(n)- n) %>%
-      rename(birthday = value) %>%
-      select(-num_teams)
     
-    missing_birthdays <- 
-      birthdays %>% 
-      filter(0 != num_missing)
     
-    if(nrow(missing_birthdays) > 0){
-      missing_birthdays <- 
-        missing_birthdays %>%
-        select(team_num, num_missing) %>%
-        distinct() %>%
-        nest(-team_num) %>%
-        mutate(birthday = map(data, ~ rep(NA_character_, .x$num_missing))) %>%
-        select(-data) %>%
-        unnest() %>%
-        select(birthday, team_num)
-      
-      birthdays <-
-        birthdays %>%
-        select(birthday, team_num) %>%
-        bind_rows(missing_birthdays) %>%
-        arrange(team_num) 
-    }
-    
-    birthdays <- birthdays %>% select(birthday)
-    
+    lane_team_positions <- c51a_info %>% filter(str_detect(value, "\\([[:alnum:]]{1}\\)"))
+    names               <- c51a_info %>% filter(str_detect(value, "^[[:alpha:]]"))                 %>% rename(name = value)
+    birthdays           <- c51a_info %>% filter(str_detect(value, "\\d{2} [[:alpha:]]{3} \\d{4}")) %>% rename(birthday = value)
     
     # return(nrow(lane_team_positions) == nrow(names) & nrow(names) == nrow(birthdays))
     
@@ -343,8 +298,8 @@ parse_files_for_year <- function(directory){
   
   files_parsed <- 
     files_nested %>%
-    mutate(#c51a_parsed = map(data, ~ parse_c51a(.$c51a)),
-           c73_parsed  = map(data, ~ parse_c73(.$c73)))#,
+    mutate(c51a_parsed = map(data, ~ parse_c51a(.$c51a)),
+           c73_parsed  = map(data, ~ parse_c73(.$c73)),
            gps_parsed  = map(data, ~ parse_gps(.$mgps)))
   
   files_joined <-

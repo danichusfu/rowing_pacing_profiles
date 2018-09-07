@@ -124,7 +124,7 @@ parse_c51a <- function(c51a_file_name){
            )
   }
   
-  # regualr expressions for filtering relevant information
+  # regular expressions for filtering relevant information
   lane_team_position_reg_ex               <- "^\\d{1} [[:alpha:]]{3} \\([[:alnum:]]{1}\\)"
   lane_team_position_name_birthday_reg_ex <- "^\\d{1} [[:alpha:]]{3} \\([[:alnum:]]{1}\\) .+ \\d{2} [[:alpha:]]{3} \\d{4}$"
   lane_team_reg_ex                        <- "^\\d{1} [[:alpha:]]{3}"

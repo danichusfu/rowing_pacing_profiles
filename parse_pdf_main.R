@@ -63,8 +63,7 @@ chip_by_year_partitioned %>%
 start <- proc.time() # Start clock
 all_years_parsed <- 
   chip_by_year_partitioned %>%
-  filter(year %in% c(2010, 2014)) %>%
-  mutate(data = list(parse_files_for_year(year_directory))) %>%
+  mutate(data = map(year_directory, parse_files_for_year)) %>%
   collect() %>% # Special collect() function to recombine partitions
   as_tibble() 
 time_elapsed_series <- proc.time() - start # End clock
@@ -72,21 +71,24 @@ time_elapsed_series <- proc.time() - start # End clock
 start <- proc.time() # Start clock
 all_years_parsed <- 
   championship_by_year %>%
-  filter(year %in% 2010:2011) %>%
-  mutate(data = list(parse_files_for_year(year_directory)))
+  filter(year %in% 2011) %>%
+  mutate(data = map(year_directory, parse_files_for_year))
 time_elapsed_series <- proc.time() - start # End clock
 
 
 
 # for debugging
 # 
+# directory <- "scraped_pdfs/2011_world_championships/"
+#
+# parse_files_for_year(directory)
 # parse_gps(gps_file_name)
 # parse_c73(c73_file_name)
 # parse_c51a(c51a_file_name)
 # 
 # 
 # 
-# gps_file_name <- "scraped_pdfs/2014_world_championships/ROM012101_MGPS.pdf"
+# gps_file_name <- "scraped_pdfs/2011_world_championships/ROMA12901_MGPS.pdf"
 # 
 # c73_file_name <- "scraped_pdfs/2016_world_championships/ROM112303_C73.pdf"
 # 

@@ -276,7 +276,7 @@ parse_c73 <- function(c73_file_name){
   
   c73_info <-
     extract_text(c73_file_name) %>% 
-    str_replace('DNS', 'STR_TO_FIND_LINE STR_TO_SPLIT_ON') %>%
+    str_replace_all('DNS', 'STR_TO_FIND_LINE STR_TO_SPLIT_ON') %>%
     str_split('(\r\n|STR_TO_SPLIT_ON )') %>% 
     unlist() %>% 
     as_tibble() %>%

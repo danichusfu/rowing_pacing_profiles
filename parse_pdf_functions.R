@@ -93,25 +93,8 @@ parse_gps <- function(gps_file_name){
 }
 
 
-
+# get lane, team, position and birthdays
 parse_c51a <- function(c51a_file_name){
-  
-  # list of common lines of text in the gps pdf
-  # to remove before extracting information
-  exclude_list <- 
-    c("INTERNET Service:", 
-      "Report Created", 
-      "FISA Data Service", 
-      "(Event)", 
-      "Dist\\.", 
-      "\\[m\\]",
-      "Speed",
-      "\\[m\\/s\\]",
-      "Page",
-      "RACE DATA",
-      "Page")
-  # make it a regex for str_detect
-  exclude_list <- glue_collapse(exclude_list, "|")
   
   # if file name is na return empty tibble 
   if(is.na(c51a_file_name)){
@@ -124,74 +107,57 @@ parse_c51a <- function(c51a_file_name){
            )
   }
   
-  # regualr expressions for filtering relevant information
-  lane_team_position_reg_ex               <- "^\\d{1} [[:alpha:]]{3} \\([[:alnum:]]{1}\\)"
-  lane_team_position_name_birthday_reg_ex <- "^\\d{1} [[:alpha:]]{3} \\([[:alnum:]]{1}\\) .+ \\d{2} [[:alpha:]]{3} \\d{4}$"
-  lane_team_reg_ex                        <- "^\\d{1} [[:alpha:]]{3}"
+  possible_positions <-
+    c("\\d",
+      "s",
+      "b"
+    )
+  possible_positions_reg_ex <- paste0("^\\(", possible_positions, "\\)(?= )") %>% glue_collapse("|")
+  # regular expressions for filtering relevant information
+  lane_team_reg_ex          <- "^\\d{1} [[:alpha:]]{3} "
+  lane_extract_reg_ex       <- "^\\d{1}"
+  team_extract_reg_ex       <- "(?<=^\\d{1} )[[:alpha:]]{3}"
+  position_extract_reg_ex   <- paste0("\\(", possible_positions, "\\)(?= )") %>% glue_collapse("|")
+  name_extract_reg_ex       <- paste0("f[^\\d]+(?= \\d{2})")
+  bday_extract_reg_ex       <- "\\d{2} [[:alpha:]]{3} \\d{4}$"
   
   c51a_info <-
-    extract_text(c51a_file_name) %>%
+    pdf_text(c51a_file_name) %>%
     str_split('\r\n') %>% 
-    unlist() %>% 
+    unlist() %>%
+    str_squish() %>%
     as_tibble() %>%
-    mutate(new_team = str_detect(value, lane_team_position_reg_ex),
-           team_num = cumsum(new_team),
-           # in 2010 a position is included with the single boats
-           # this finds if this is the case
-           pos_incl = str_detect(value, lane_team_position_name_birthday_reg_ex))
+    filter(str_detect(value, lane_team_reg_ex) |
+           str_detect(value, possible_positions_reg_ex)) %>%
+    filter(!str_detect(value, "bow|stroke|seat"))
  
-  if(max(c51a_info$team_num) == 0 | max(c51a_info$pos_incl) > 0){
+  
+  start_list_parsed <-
+    c51a_info %>%
+    mutate(lane     = str_extract(value, lane_extract_reg_ex) %>% parse_number(),
+           team     = str_extract(value, team_extract_reg_ex),
+           position = str_extract(value, position_extract_reg_ex),
+           # sometimes missing
+           birthday = str_extract(value, bday_extract_reg_ex) %>% dmy(),
+           # to help find name since sometimes position is missing for single boats
+           # then for bigger boats the secondary names do not have team or lane
+           # so remove them as well
+           name     = str_remove(value, position_extract_reg_ex) %>%
+                      str_remove(team_extract_reg_ex) %>%
+                      str_remove(lane_extract_reg_ex) %>%
+                      str_remove(bday_extract_reg_ex) %>%
+                      str_squish()) %>%
+    select(-value) %>%
+    fill(lane, team)
     
-    start_list_parsed <-
-      c51a_info %>%
-      filter(str_detect(value, lane_team_reg_ex)) %>%
-      mutate(value = str_remove(value, "\\([[:alnum:]]{1}\\)") %>% str_squish()) %>%
-      select(value) %>%
-      mutate(lane     = str_extract(value, "^\\d{1}") %>% parse_number(),
-             team     = str_extract(value, "(?<=^\\d{1} )[[:alpha:]]{3}"),
-             position = "single",
-             name     = str_extract(value, "(?<=^\\d{1} [[:alpha:]]{3} )[^\\d]+(?= \\d{2})"),
-             birthday = str_extract(value, "\\d{2} [[:alpha:]]{3} \\d{4}$") %>% dmy()
-             ) %>%
-      select(-value)
-    
-      return(start_list_parsed)
-    
-  } else {
-    pre_amble <- c51a_info %>% filter(team_num == 0) %>% pull(value)
-    
-    c51a_info <-
-      c51a_info %>%
-      filter(team_num != 0) %>%
-      add_count(team_num) %>%
-      add_count(new_team) %>%
-      mutate(n  = min(n),
-             nn = min(nn)) %>% 
-      rename(entries_per_team = n, num_teams = nn) %>%
-      filter(!value %in% pre_amble) %>%
-      filter(!str_detect(value, "Page \\d")) %>%
-      filter(row_number() <= entries_per_team * num_teams) %>%
-      select(value)
-    
-    
-    lane_team_positions <- c51a_info %>% filter(str_detect(value, "\\([[:alnum:]]{1}\\)"))
-    names               <- c51a_info %>% filter(str_detect(value, "^[[:alpha:]]"))                 %>% rename(name = value)
-    birthdays           <- c51a_info %>% filter(str_detect(value, "\\d{2} [[:alpha:]]{3} \\d{4}")) %>% rename(birthday = value)
-    
-    # return(nrow(lane_team_positions) == nrow(names) & nrow(names) == nrow(birthdays))
-    
-    start_list_parsed <-
-      lane_team_positions %>%
-      separate(value, c("lane", "team", "position"), sep = " ", fill = "left") %>%
-      fill(lane, team) %>%
-      bind_cols(names, birthdays) %>%
-      mutate(lane     = parse_number(lane),
-             birthday = dmy(birthday))
+
     return(start_list_parsed)
-  }
 }
 
 
+# Goal of this function is to parse
+# the Results c73 pdf
+# and return the rank, lane, country and progression of each boat.
 parse_c73 <- function(c73_file_name){
   
   if(is.na(c73_file_name)){
@@ -225,43 +191,33 @@ parse_c73 <- function(c73_file_name){
       "Q WB"
     )
   
-  possible_progressions <- paste0("^", possible_progressions, "($| WB$)") %>% glue_collapse("|")
+  possible_progressions <- paste0("(?<= )", possible_progressions, "($| WB$)") %>% glue_collapse("|")
   # sometimes rank is missing if they did not start
-  lane_team_reg_ex <- "[[:alnum:]]{1,2} [[:upper:]]{3}"
+  lane_team_reg_ex  <- "\\d [[:upper:]]{3}"
+  split_time_reg_ex <- "\\d\\:\\d{2}\\.\\d{2}"
   
   
   c73_info <-
-    extract_text(c73_file_name) %>% 
-    str_replace_all('DNS', 'STR_TO_FIND_LINE STR_TO_SPLIT_ON') %>%
-    str_split('(\r\n|STR_TO_SPLIT_ON )') %>% 
+    pdf_text(c73_file_name) %>% 
+    str_split('\r\n')%>% 
     unlist() %>% 
+    str_squish() %>%
     as_tibble() %>%
-    mutate(value = str_squish(value)) %>%
     filter(row_number() > 7) %>%
-    filter(!str_detect(value, "Report Created|World Champion")) %>%
-    filter(# either its a progression value which is always preceded by a split time
-      str_detect(value, possible_progressions) & str_detect(lag(value), "\\d\\.\\d{2}|STR_TO_FIND_LINE") |
-        # or it is the line that has thelane and team information
-        str_detect(value, lane_team_reg_ex))
-  
-  
-  race_splits  <- c73_info %>% filter(str_detect(value, lane_team_reg_ex))
-  progressions <- c73_info %>% filter(str_detect(value, possible_progressions)) %>% rename(progression = value)
-  if(nrow(progressions) == 0){
-    progressions <- tibble(progression = rep("final_race", nrow(race_splits)))
-  }
-  
-  reg_ex_for_name <- glue("(?<={rank_lane_team_reg_ex})[^\\d]+(?= \\d)")
-  
-  return(nrow(progressions) == nrow(race_splits))
+    filter(!str_detect(value, "Report Created|RESULTS|Race")) %>%
+    filter(str_detect(value, lane_team_reg_ex) & str_detect(value, split_time_reg_ex))
   
   results_parsed <-
-    race_splits %>%
-    mutate(rank_final = word(value, 1) %>% parse_number(),
-           lane       = word(value, 2) %>% parse_number(),
-           team       = word(value, 3)) %>%
-    select(-value) %>%
-  bind_cols(progressions)
+    c73_info %>%
+    mutate( # sometimes no final rank is given (it can be assumed from the progression)
+           rank_final  = str_extract(value, "^\\d(?= \\d [[:upper:]]{3})") %>% parse_number(),
+           lane        = str_extract(value, "\\d(?= [[:upper:]]{3})") %>% parse_number(),
+           team        = str_extract(value, "(?<=\\d )[[:upper:]]{3}"),
+           progression = str_extract(value, possible_progressions),
+           dns         = str_detect(value, " DNS"),
+           exc         = str_detect(value, " EXC"),
+           dnf         = str_detect(value, " DNF")) %>%
+    select(-value) 
   
   return(results_parsed)
 }

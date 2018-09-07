@@ -1,6 +1,3 @@
-# If pacman is not installed, install it
-# install.packages('pacman')
-
 # for rJava package 
 # https://cimentadaj.github.io/blog/2018-05-25-installing-rjava-on-windows-10/installing-rjava-on-windows-10/
 # Sys.setenv(JAVA_HOME="C:/Program Files/Java/jdk-10.0.2/")
@@ -11,45 +8,21 @@
 # for tabulizer package help
 # https://github.com/ropensci/tabulizer#installing-java-on-windows-with-chocolatey 
 
-
-pacman::p_load(tidyverse, glue, lubridate, devtools, remotes, rJava, tabulizer)
+# If pacman is not installed, install it
+# install.packages('pacman')
+pacman::p_load(tidyverse, glue, lubridate, pdftools, devtools, remotes, rJava, tabulizer)
 
 # for parallelizing
 # http://www.business-science.io/code-tools/2016/12/18/multidplyr.html
-devtools::install_github("hadley/multidplyr")
+# devtools::install_github("hadley/multidplyr")
 library(multidplyr)
 pacman::p_load(parallel)
+
+# LOAD FUNCTION
 source('parse_pdf_functions.R')
-
-directory <- "scraped_pdfs/2011_world_championships/"
-#parse_files_for_year(directory)
-
-#directory <- "scraped_pdfs/"
-
-#%>%
-#  unite("measurement_type_distance", measurement_type, distance) %>%
-#  spread(measurement_type_distance, measurement)
-
-2011
-2012
-2013
-
-
-parse_gps(gps_file_name)
-parse_c73(c73_file_name)
-parse_c51a(c51a_file_name)
-
-
-
-gps_file_name <- "scraped_pdfs/2014_world_championships/ROM012101_MGPS.pdf"
-
-c73_file_name <- "scraped_pdfs/2011_world_championships/ROMA12201_C73.pdf"
-
-c51a_file_name <- "scraped_pdfs/2014_world_championships/ROM012101_C51A.pdf"
 
 
 #### PARALIZE
-
 num_cores <- detectCores()
 cluster <- create_cluster(cores = num_cores)
 
@@ -102,3 +75,19 @@ all_years_parsed <-
   filter(year %in% 2010:2011) %>%
   mutate(data = list(parse_files_for_year(year_directory)))
 time_elapsed_series <- proc.time() - start # End clock
+
+
+
+# for debugging
+# 
+# parse_gps(gps_file_name)
+# parse_c73(c73_file_name)
+# parse_c51a(c51a_file_name)
+# 
+# 
+# 
+# gps_file_name <- "scraped_pdfs/2014_world_championships/ROM012101_MGPS.pdf"
+# 
+# c73_file_name <- "scraped_pdfs/2016_world_championships/ROM112303_C73.pdf"
+# 
+# c51a_file_name <- "scraped_pdfs/2012_world_championships/ROM112101_C51A.pdf"

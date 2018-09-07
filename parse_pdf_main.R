@@ -12,7 +12,7 @@
 # https://github.com/ropensci/tabulizer#installing-java-on-windows-with-chocolatey 
 
 
-pacman::p_load(tidyverse, glue, lubridate, devtools, remotes, rJava, tabulizer)
+pacman::p_load(tidyverse, glue, lubridate, pdftools, devtools, remotes, rJava, tabulizer)
 
 # for parallelizing
 # http://www.business-science.io/code-tools/2016/12/18/multidplyr.html
@@ -21,7 +21,26 @@ library(multidplyr)
 pacman::p_load(parallel)
 source('parse_pdf_functions.R')
 
-directory <- "scraped_pdfs/2011_world_championships/"
+directory <- "scraped_pdfs/2016_world_championships/"
+file_name <- list.files(directory)
+files     <- tibble(file_name)
+files_nested <- 
+  files %>% 
+  mutate(race_id   = str_extract(file_name, ".+(?=_)"),
+         file_type = str_extract(file_name, "(?<=_).+(?=.pdf)"),
+         file_path = paste0(directory, file_name)
+  ) %>%
+  select(-file_name) %>%
+  spread(file_type, file_path) %>%
+  rename_all(tolower) %>%
+  drop_na(mgps, c73, c51a) %>%
+  nest(-race_id)
+files_parsed <- files_nested %>%
+  mutate(#c51a_parsed = map(data, ~ parse_c51a(.$c51a)),
+    c73_parsed  = map(data, ~ parse_c73(.$c73)))#, 
+
+files_parsed %>% select(-data) %>% unnest() %>% summary()
+files_parsed %>% select(-data) %>% unnest() %>% filter((is.na(rank_final) & !dns) | is.na(team)) 
 #parse_files_for_year(directory)
 
 #directory <- "scraped_pdfs/"
@@ -43,7 +62,7 @@ parse_c51a(c51a_file_name)
 
 gps_file_name <- "scraped_pdfs/2014_world_championships/ROM012101_MGPS.pdf"
 
-c73_file_name <- "scraped_pdfs/2011_world_championships/ROMA12201_C73.pdf"
+c73_file_name <- "scraped_pdfs/2016_world_championships/ROM112303_C73.pdf"
 
 c51a_file_name <- "scraped_pdfs/2014_world_championships/ROM012101_C51A.pdf"
 

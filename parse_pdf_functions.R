@@ -192,6 +192,9 @@ parse_c51a <- function(c51a_file_name){
 }
 
 
+# Goal of this function is to parse
+# the Results c73 pdf
+# and return the rank, lane, country and progression of each boat.
 parse_c73 <- function(c73_file_name){
   
   if(is.na(c73_file_name)){
@@ -225,43 +228,33 @@ parse_c73 <- function(c73_file_name){
       "Q WB"
     )
   
-  possible_progressions <- paste0("^", possible_progressions, "($| WB$)") %>% glue_collapse("|")
+  possible_progressions <- paste0("(?<= )", possible_progressions, "($| WB$)") %>% glue_collapse("|")
   # sometimes rank is missing if they did not start
-  lane_team_reg_ex <- "[[:alnum:]]{1,2} [[:upper:]]{3}"
+  lane_team_reg_ex  <- "\\d [[:upper:]]{3}"
+  split_time_reg_ex <- "\\d\\:\\d{2}\\.\\d{2}"
   
   
   c73_info <-
-    extract_text(c73_file_name) %>% 
-    str_replace_all('DNS', 'STR_TO_FIND_LINE STR_TO_SPLIT_ON') %>%
-    str_split('(\r\n|STR_TO_SPLIT_ON )') %>% 
+    pdf_text(c73_file_name) %>% 
+    str_split('\r\n')%>% 
     unlist() %>% 
+    str_squish() %>%
     as_tibble() %>%
-    mutate(value = str_squish(value)) %>%
     filter(row_number() > 7) %>%
-    filter(!str_detect(value, "Report Created|World Champion")) %>%
-    filter(# either its a progression value which is always preceded by a split time
-      str_detect(value, possible_progressions) & str_detect(lag(value), "\\d\\.\\d{2}|STR_TO_FIND_LINE") |
-        # or it is the line that has thelane and team information
-        str_detect(value, lane_team_reg_ex))
-  
-  
-  race_splits  <- c73_info %>% filter(str_detect(value, lane_team_reg_ex))
-  progressions <- c73_info %>% filter(str_detect(value, possible_progressions)) %>% rename(progression = value)
-  if(nrow(progressions) == 0){
-    progressions <- tibble(progression = rep("final_race", nrow(race_splits)))
-  }
-  
-  reg_ex_for_name <- glue("(?<={rank_lane_team_reg_ex})[^\\d]+(?= \\d)")
-  
-  return(nrow(progressions) == nrow(race_splits))
+    filter(!str_detect(value, "Report Created|RESULTS|Race")) %>%
+    filter(str_detect(value, lane_team_reg_ex) & str_detect(value, split_time_reg_ex))
   
   results_parsed <-
-    race_splits %>%
-    mutate(rank_final = word(value, 1) %>% parse_number(),
-           lane       = word(value, 2) %>% parse_number(),
-           team       = word(value, 3)) %>%
-    select(-value) %>%
-  bind_cols(progressions)
+    c73_info %>%
+    mutate( # sometimes no final rank is given (it can be assumed from the progression)
+           rank_final  = str_extract(value, "^\\d(?= \\d [[:upper:]]{3})") %>% parse_number(),
+           lane        = str_extract(value, "\\d(?= [[:upper:]]{3})") %>% parse_number(),
+           team        = str_extract(value, "(?<=\\d )[[:upper:]]{3}"),
+           progression = str_extract(value, possible_progressions),
+           dns         = str_detect(value, " DNS"),
+           exc         = str_detect(value, " EXC"),
+           dnf         = str_detect(value, " DNF")) %>%
+    select(-value) 
   
   return(results_parsed)
 }

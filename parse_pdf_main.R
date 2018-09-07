@@ -21,6 +21,7 @@ pacman::p_load(parallel)
 # LOAD FUNCTION
 source('parse_pdf_functions.R')
 
+unlink("scraped_pdfs/2015_world_championships/ROMA12203_C73.pdf")
 
 #### PARALIZE
 num_cores <- detectCores()
@@ -50,6 +51,7 @@ chip_by_year_partitioned %>%
   cluster_library("lubridate") %>%
   cluster_library("rJava") %>%
   cluster_library("tabulizer") %>%
+  cluster_library("pdftools") %>%
   # Assign values (use this to load functions or data to each core)
   cluster_assign_value("extract_gps_data", extract_gps_data) %>%
   cluster_assign_value("extract_race_information_gps", extract_race_information_gps) %>%
@@ -71,7 +73,7 @@ time_elapsed_series <- proc.time() - start # End clock
 start <- proc.time() # Start clock
 all_years_parsed <- 
   championship_by_year %>%
-  filter(year %in% 2011) %>%
+  filter(year %in% 2013) %>%
   mutate(data = map(year_directory, parse_files_for_year))
 time_elapsed_series <- proc.time() - start # End clock
 
@@ -79,7 +81,7 @@ time_elapsed_series <- proc.time() - start # End clock
 
 # for debugging
 # 
-# directory <- "scraped_pdfs/2011_world_championships/"
+# directory <- "scraped_pdfs/2015_world_championships/"
 #
 # parse_files_for_year(directory)
 # parse_gps(gps_file_name)
@@ -88,7 +90,7 @@ time_elapsed_series <- proc.time() - start # End clock
 # 
 # 
 # 
-# gps_file_name <- "scraped_pdfs/2011_world_championships/ROMA12901_MGPS.pdf"
+# gps_file_name <- "scraped_pdfs/2015_world_championships/ROMA12901_MGPS.pdf"
 # 
 # c73_file_name <- "scraped_pdfs/2016_world_championships/ROM112303_C73.pdf"
 # 

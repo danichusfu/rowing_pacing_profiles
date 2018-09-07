@@ -271,12 +271,14 @@ parse_files_for_year <- function(directory){
     mutate(c51a_parsed = map(data, ~ parse_c51a(.$c51a)),
            c73_parsed  = map(data, ~ parse_c73(.$c73)),
            gps_parsed  = map(data, ~ parse_gps(.$mgps)))
-  
+
   # for debugging purposes
-  # files_parsed <- files_nested %>% mutate(c51a_parsed = map(data, ~ possibly(parse_c51a, otherwise = NA_real_)(.$c51a)))
-  # files_parsed <- files_nested %>% mutate(c51a_parsed = map(data, ~ possibly(parse_c73, otherwise = NA_real_)(.$c73)))
-  # files_parsed <- files_nested %>% mutate(gps_parsed  = map(data, ~ possibly(parse_gps, otherwise = NA_real_)(.$mgps)))
-  
+   # files_parsed <- files_nested %>% mutate(c51a_parsed = map(data, ~ possibly(parse_c51a, otherwise = NA_real_)(.$c51a)))
+   # files_parsed %>% filter(is.na(c51a_parsed))
+   #  files_parsed <- files_nested %>% mutate(c73_parsed = map(data, ~ possibly(parse_c73, otherwise = NA_real_)(.$c73)))
+   #  files_parsed %>% filter(is.na(c73_parsed))
+   #  files_parsed <- files_nested %>% mutate(gps_parsed  = map(data, ~ possibly(parse_gps, otherwise = NA_real_)(.$mgps)))
+   #  files_parsed %>% filter(is.na(gps_parsed))
   
   files_joined <-
     files_parsed %>%

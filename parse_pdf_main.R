@@ -21,7 +21,7 @@ library(multidplyr)
 pacman::p_load(parallel)
 source('parse_pdf_functions.R')
 
-directory <- "scraped_pdfs/2016_world_championships/"
+directory <- "scraped_pdfs/2011_world_championships/"
 file_name <- list.files(directory)
 files     <- tibble(file_name)
 files_nested <- 
@@ -36,11 +36,11 @@ files_nested <-
   drop_na(mgps, c73, c51a) %>%
   nest(-race_id)
 files_parsed <- files_nested %>%
-  mutate(#c51a_parsed = map(data, ~ parse_c51a(.$c51a)),
-    c73_parsed  = map(data, ~ parse_c73(.$c73)))#, 
+  mutate(c51a_parsed = map(data, ~ parse_c51a(.$c51a)))
+   
 
 files_parsed %>% select(-data) %>% unnest() %>% summary()
-files_parsed %>% select(-data) %>% unnest() %>% filter((is.na(rank_final) & !dns) | is.na(team)) 
+files_parsed %>% select(-data) %>% unnest() %>% filter_all(any_vars(is.na(.))) 
 #parse_files_for_year(directory)
 
 #directory <- "scraped_pdfs/"
@@ -64,7 +64,7 @@ gps_file_name <- "scraped_pdfs/2014_world_championships/ROM012101_MGPS.pdf"
 
 c73_file_name <- "scraped_pdfs/2016_world_championships/ROM112303_C73.pdf"
 
-c51a_file_name <- "scraped_pdfs/2014_world_championships/ROM012101_C51A.pdf"
+c51a_file_name <- "scraped_pdfs/2010_world_championships/ROM012101_C51A.pdf"
 
 
 #### PARALIZE

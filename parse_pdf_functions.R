@@ -71,7 +71,7 @@ extract_gps_data <- function(gps_file_name, col_names){
   if(length(race_table) == 0){
     return(tibble(distance = double(),
                   team = character(), 
-                  lane = double(), 
+                  lane_pre_2017 = double(), 
                   measurement_type = character(), 
                   measurement = double()
           )
@@ -99,7 +99,7 @@ parse_gps <- function(gps_file_name){
   gps_parsed <- 
     gps_parsed %>% 
     unnest() %>%
-    mutate_at(vars(c("lane", "event_num", "distance", "measurement")), parse_number)
+    mutate_at(vars(c("lane_pre_2017", "event_num", "distance", "measurement")), parse_number)
   
   return(gps_parsed)
 }
@@ -309,3 +309,50 @@ parse_files_for_year <- function(directory){
   
 }
 
+
+augment_races <- function(data){
+  data <- 
+    data %>%
+    # https://en.wikipedia.org/wiki/Rowing_(sport)#Terminology_and_event_nomenclature
+    mutate(weight_class  = if_else(str_detect(event_cateogry_abbreviation, "L"), "light", "open"),
+           gender        = case_when(str_detect(event_cateogry_abbreviation, "W")   ~ "women",
+                                     str_detect(event_cateogry_abbreviation, "Mix") ~ "mixed",
+                                     TRUE                                           ~ "men"),
+           size          = str_extract(event_cateogry_abbreviation, "(?<=L|W|Mix|M)\\d") %>% parse_number(),
+           discipline    = if_else(str_detect(event_cateogry_abbreviation, "x$"), "scull", "sweep"),
+           coxswain      = if_else(str_detect(event_cateogry_abbreviation, "\\+$"), "coxed", "coxless"),
+           # TA Trunks and Arms
+           # PR used to be AS used to be A, Arms and Shoulders
+           # ID intellectually disabled
+           # Legs Trunks and Arms
+           # https://en.wikipedia.org/wiki/Adaptive_rowing
+           adaptive      = if_else(str_detect(event_cateogry_abbreviation, "^PR|^AS|^A|^ID|^TA|^LTA"), T, F),
+           adapt_desig   = case_when(str_detect(event_cateogry_abbreviation, "^PR1|^AS|^A") ~ "arm_shoulder",
+                                     str_detect(event_cateogry_abbreviation, "^ID")         ~ "intel_disab",
+                                     str_detect(event_cateogry_abbreviation, "^PR2|^TA")    ~ "trunk_arm",
+                                     str_detect(event_cateogry_abbreviation, "^PR3|^LTA")   ~ "leg_trunk_arm",
+                                     TRUE                                                   ~ "not_adapt"),
+           junior        = if_else(str_detect(event_cateogry_abbreviation, "^J"), "junior", "senior"),
+           round_type    = case_when(str_detect(round, "F") ~ "final",
+                                     str_detect(round, "H") ~ "heat",
+                                     str_detect(round, "Q") ~ "quarterfinal",
+                                     str_detect(round, "R") ~ "repecharge",
+                                     str_detect(round, "S") ~ "semifinal",
+                                     str_detect(round, "X") ~ "exhibition"),
+           heat_or_final = if_else(round_type == "final", "final", "heat"))
+  return(data)
+}
+
+
+make_boats_race_the_observation <- function(data){
+  data <- 
+    data %>%
+    # not all years have measurement severy 25m or every 10m like in some years
+    filter(distance %% 50 == 0) %>%
+    unite(measurement_type_distance, measurement_type, distance) %>%
+    spread(measurement_type_distance, measurement) %>%
+    unite(name_birthday, name, birthday) %>%
+    spread(position, name_birthday) %>%
+    separate_name_birthday_cols() 
+  return(data)
+}

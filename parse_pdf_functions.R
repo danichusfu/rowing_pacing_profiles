@@ -79,7 +79,8 @@ extract_gps_data <- function(gps_file_name, col_names){
   }
   
   speed_strokes <- 
-    race_table[[1]] %>%
+    race_table %>%
+    do.call(rbind, .) %>%
     as_tibble() %>%
     filter_all(any_vars(str_detect(., "\\d"))) %>%
     select(1:num_cols) %>%
@@ -141,7 +142,7 @@ parse_c51a <- function(c51a_file_name){
     as_tibble() %>%
     filter(str_detect(value, lane_team_reg_ex) |
            str_detect(value, possible_positions_reg_ex)) %>%
-    filter(!str_detect(value, "bow|stroke|seat"))
+    filter(!str_detect(value, "bow|stroke|seat|cox"))
  
   
   start_list_parsed <-

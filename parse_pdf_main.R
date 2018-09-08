@@ -62,20 +62,26 @@ chip_by_year_partitioned %>%
   cluster_assign_value("separate_name_birthday_cols", separate_name_birthday_cols)
 
 
-start <- proc.time() # Start clock
-all_years_parsed <- 
+start_slow <- proc.time() # Start clock
+all_years_parsed_slow <- 
   chip_by_year_partitioned %>%
-  mutate(data = map(year_directory, parse_files_for_year)) %>%
-  collect() %>% # Special collect() function to recombine partitions
-  as_tibble() 
-time_elapsed_series <- proc.time() - start # End clock
-
-start <- proc.time() # Start clock
-all_years_parsed <- 
-  championship_by_year %>%
-  filter(year %in% 2013) %>%
   mutate(data = map(year_directory, parse_files_for_year))
-time_elapsed_series <- proc.time() - start # End clock
+time_elapsed_series_slow <- proc.time() - start_slow # End clock
+
+all_years_cleaned 
+  all_years_parsed %>%
+  ungroup() %>%
+  select(-core_group) %>%
+  arrange(year) %>%
+  unnest() %>%
+  unite(measurement_type_distance, measurement_type, distance) %>%
+  spread(measurement_type_distance, measurement) %>%
+  filter(!str_detect(name, "cox")) %>%
+  unite(name_birthday, name, birthday) %>%
+  spread(position, name_birthday) %>%
+  separate_name_birthday_cols() %>%
+  filter(year == 2017) %>%
+  select(speed_1650)
 
 
 
@@ -90,8 +96,8 @@ time_elapsed_series <- proc.time() - start # End clock
 # 
 # 
 # 
-# gps_file_name <- "scraped_pdfs/2015_world_championships/ROMA12901_MGPS.pdf"
+# gps_file_name <- "scraped_pdfs/2017_world_championships/ROM012101_MGPS.pdf"
 # 
-# c73_file_name <- "scraped_pdfs/2016_world_championships/ROM112303_C73.pdf"
+# c73_file_name <- "scraped_pdfs/2010_world_championships/ROM083101_C73.pdf"
 # 
-# c51a_file_name <- "scraped_pdfs/2012_world_championships/ROM112101_C51A.pdf"
+# c51a_file_name <- "scraped_pdfs/2010_world_championships/ROM083101_C51A.pdf"

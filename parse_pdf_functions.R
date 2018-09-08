@@ -67,8 +67,20 @@ extract_race_information_gps <- function(gps_file_name){
 
 extract_gps_data <- function(gps_file_name, col_names){
   num_cols <-length(col_names)
+  race_table <- extract_tables(gps_file_name, method = "lattice")
+  if(length(race_table) == 0){
+    return(tibble(distance = double(),
+                  team = character(), 
+                  lane = double(), 
+                  measurement_type = character(), 
+                  measurement = double()
+          )
+    )
+  }
+  
   speed_strokes <- 
-    extract_tables(gps_file_name, method = "lattice")[[1]] %>%
+    race_table %>%
+    do.call(rbind, .) %>%
     as_tibble() %>%
     filter_all(any_vars(str_detect(., "\\d"))) %>%
     select(1:num_cols) %>%
@@ -110,7 +122,8 @@ parse_c51a <- function(c51a_file_name){
   possible_positions <-
     c("\\d",
       "s",
-      "b"
+      "b",
+      "c"
     )
   possible_positions_reg_ex <- paste0("^\\(", possible_positions, "\\)(?= )") %>% glue_collapse("|")
   # regular expressions for filtering relevant information
@@ -129,7 +142,7 @@ parse_c51a <- function(c51a_file_name){
     as_tibble() %>%
     filter(str_detect(value, lane_team_reg_ex) |
            str_detect(value, possible_positions_reg_ex)) %>%
-    filter(!str_detect(value, "bow|stroke|seat"))
+    filter(!str_detect(value, "bow|stroke|seat|cox"))
  
   
   start_list_parsed <-
@@ -224,8 +237,9 @@ parse_c73 <- function(c73_file_name){
 
 
 separate_name_birthday_cols <- function(data){
-  data %>%
-    separate(single, c("single_birthday", "single_name"), sep = "_") %>%
+  data <-
+    data %>%
+    #separate(single, c("single_birthday", "single_name"), sep = "_") %>%
     separate(second, c("second_birthday", "second_name"), sep = "_") %>% 
     separate(third, c("third_birthday", "third_name"), sep = "_") %>%
     separate(fourth, c("fourth_birthday", "fourth_name"), sep = "_") %>% 
@@ -235,6 +249,7 @@ separate_name_birthday_cols <- function(data){
     separate(stroke, c("stroke_birthday", "stroke_name"), sep = "_") %>% 
     separate(bow, c("bow_birthday", "bow_name"), sep = "_") %>%
     separate(coxswain, c("coxswain_birthday", "coxswain_name"), sep = "_") 
+  return(data)
 }
 
 parse_files_for_year <- function(directory){
@@ -252,11 +267,19 @@ parse_files_for_year <- function(directory){
     drop_na(mgps, c73, c51a) %>%
     nest(-race_id)
   
-  files_parsed <- 
+  files_parsed <-
     files_nested %>%
     mutate(c51a_parsed = map(data, ~ parse_c51a(.$c51a)),
            c73_parsed  = map(data, ~ parse_c73(.$c73)),
            gps_parsed  = map(data, ~ parse_gps(.$mgps)))
+
+  # for debugging purposes
+   # files_parsed <- files_nested %>% mutate(c51a_parsed = map(data, ~ possibly(parse_c51a, otherwise = NA_real_)(.$c51a)))
+   # files_parsed %>% filter(is.na(c51a_parsed))
+   #  files_parsed <- files_nested %>% mutate(c73_parsed = map(data, ~ possibly(parse_c73, otherwise = NA_real_)(.$c73)))
+   #  files_parsed %>% filter(is.na(c73_parsed))
+   #  files_parsed <- files_nested %>% mutate(gps_parsed  = map(data, ~ possibly(parse_gps, otherwise = NA_real_)(.$mgps)))
+   #  files_parsed %>% filter(is.na(gps_parsed))
   
   files_joined <-
     files_parsed %>%
@@ -276,10 +299,7 @@ parse_files_for_year <- function(directory){
                                 position == "(s)" ~ "stroke",
                                 position == "(b)" ~ "bow",
                                 position == "(c)" ~ "coxswain",
-                                position == "single" ~ "single")) %>%
-    unite("name_birthday", name, birthday) %>%
-    spread(position, name_birthday) %>%
-    separate_name_birthday_cols()
+                                position == "single" ~ "single"))
   
   return(files_cleaned)
   

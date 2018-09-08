@@ -204,12 +204,11 @@ parse_c73 <- function(c73_file_name){
       "Q WB"
     )
   
-  possible_progressions <- paste0("(?<= )", possible_progressions, "($| WB$)") %>% glue_collapse("|")
+  possible_progressions_reg_ex <- paste0("(?<= )", possible_progressions, "($| WB$)") %>% glue_collapse("|")
   # sometimes rank is missing if they did not start
   lane_team_reg_ex  <- "\\d [[:upper:]]{3}"
   split_time_reg_ex <- "\\d\\:\\d{2}\\.\\d{2}"
-  
-  
+
   c73_info <-
     pdf_text(c73_file_name) %>% 
     str_split('\r\n')%>% 
@@ -226,10 +225,18 @@ parse_c73 <- function(c73_file_name){
            rank_final  = str_extract(value, "^\\d(?= \\d [[:upper:]]{3})") %>% parse_number(),
            lane        = str_extract(value, "\\d(?= [[:upper:]]{3})") %>% parse_number(),
            team        = str_extract(value, "(?<=\\d )[[:upper:]]{3}"),
-           progression = str_extract(value, possible_progressions),
+           progression = str_extract(value, possible_progressions_reg_ex),
            dns         = str_detect(value, " DNS"),
            exc         = str_detect(value, " EXC"),
-           dnf         = str_detect(value, " DNF")) %>%
+           dnf         = str_detect(value, " DNF"),
+           split_1_time = str_extract(value, split_time_reg_ex),
+           value        = str_remove(value, split_time_reg_ex),
+           split_2_time = str_extract(value, split_time_reg_ex),
+           value        = str_remove(value, split_time_reg_ex),
+           split_3_time = str_extract(value, split_time_reg_ex),
+           value        = str_remove(value, split_time_reg_ex),
+           split_4_time = str_extract(value, split_time_reg_ex)) %>%
+    mutate_at(vars(matches("time")), ~ ms(.) %>% seconds()) %>%
     select(-value) 
   
   return(results_parsed)

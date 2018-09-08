@@ -290,7 +290,11 @@ parse_files_for_year <- function(directory){
   
   files_joined <-
     files_parsed %>%
-    mutate(data_joined = map2(c51a_parsed, c73_parsed, ~ full_join(.x, .y, by = c("team", "lane"))),
+    mutate(# found cases in 2017 where the start list lane differs from the lane reported in results
+           # we will use the results lane as the one that was actually seen
+           # this like below requires the assumption that there is only one of each boat from each country
+           # in each race
+           data_joined = map2(c51a_parsed, c73_parsed, ~ full_join(.x, .y, by = c("team"))),
            # in 2017 they stopped listing boats in their lane order in the gps tables
            # as far as i can tell from looking at tables like this http://www.worldrowing.com/assets/pdfs/WCH_2017/RO0000000_C30A.pdf
            # only one entry into each category by country

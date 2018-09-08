@@ -108,7 +108,7 @@ all_years_augmented %>% filter(split_3_time == min(split_3_time, na.rm = T))
 
 # for debugging
 # 
-# directory <- "scraped_pdfs/2010_world_championships/"
+# directory <- "scraped_pdfs/2017_world_championships/"
 #
 # parse_files_for_year(directory)
 # parse_gps(gps_file_name)
@@ -117,8 +117,8 @@ all_years_augmented %>% filter(split_3_time == min(split_3_time, na.rm = T))
 # 
 # 
 # 
-# gps_file_name <- "scraped_pdfs/2017_world_championships/ROXR43P01_MGPS.pdf"
+# gps_file_name <- "scraped_pdfs/2017_world_championships/ROM022101_MGPS.pdf"
 # 
-# c73_file_name <- "scraped_pdfs/2017_world_championships/ROWP12102_C73.pdf"
+# c73_file_name <- "scraped_pdfs/2017_world_championships/ROM022101_C73.pdf"
 # 
-# c51a_file_name <- "scraped_pdfs/2017_world_championships/ROM012101_C51A.pdf"
+# c51a_file_name <- "scraped_pdfs/2017_world_championships/ROM022101_C51A.pdf"

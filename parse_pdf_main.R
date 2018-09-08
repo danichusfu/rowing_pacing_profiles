@@ -1,3 +1,6 @@
+#####################
+##### PACKAGES ######
+#####################
 # for rJava package 
 # https://cimentadaj.github.io/blog/2018-05-25-installing-rjava-on-windows-10/installing-rjava-on-windows-10/
 # Sys.setenv(JAVA_HOME="C:/Program Files/Java/jdk-10.0.2/")
@@ -18,49 +21,42 @@ pacman::p_load(tidyverse, glue, lubridate, pdftools, devtools, remotes, rJava, t
 library(multidplyr)
 pacman::p_load(parallel)
 
-# LOAD FUNCTION
-source('parse_pdf_functions.R')
+#####################
+#### FIND IF WE CAN CALL A RUN TO SHELL BASH FILE FROM R ####
+#####################
 
+
+#####################
+#### DELETE FILE ####
+#####################
+# delete file as it is a broken file both online and locally
+# doing it in code so we can be more reproducible
 unlink("scraped_pdfs/2015_world_championships/ROMA12203_C73.pdf")
 
-#### PARALIZE
-num_cores <- detectCores()
-cluster <- create_cluster(cores = num_cores)
+#####################
+#### FUNCTIONS ######
+#####################
+source('parse_pdf_functions.R')
 
-championship_by_year <- 
-  tibble(year = 2010:2017) %>%
-  mutate(year_directory = paste0("scraped_pdfs/", year, "_world_championships/"),
-         approx_num_races = map(year_directory, ~ length(list.files(.x))/3)) %>%
-  unnest() %>%
-  mutate(rank = row_number(row_number(approx_num_races))) %>%
-  arrange(-rank) %>%
-  mutate(rank_rev  = row_number(),
-         rank_comb = abs(rank - rank_rev),
-         rank_alt  = dense_rank(rank_comb),
-         core_group = rank_alt %% num_cores + 1) %>%
-  select(year, year_directory, core_group)
+# in case you want to do it in parallel
+num_cores <- detectCores()
+
+#####################
+#### CREATE DF ######
+#####################
+championship_by_year <- create_df_of_race_pdfs_by_year(num_cores)
+
+#####################
+# DO IT IN PARALLEL #
+#####################
+# Cut done time from 60 to 25 minutes, refers to reference above
+cluster <- create_cluster(cores = num_cores)
 
 chip_by_year_partitioned <- 
   championship_by_year %>%
-  partition(core_group, cluster = cluster)
+  partition(core_group, cluster = cluster) 
 
-chip_by_year_partitioned %>%
-  # Assign libraries
-  cluster_library("tidyverse") %>%
-  cluster_library("glue") %>%
-  cluster_library("lubridate") %>%
-  cluster_library("rJava") %>%
-  cluster_library("tabulizer") %>%
-  cluster_library("pdftools") %>%
-  # Assign values (use this to load functions or data to each core)
-  cluster_assign_value("extract_gps_data", extract_gps_data) %>%
-  cluster_assign_value("extract_race_information_gps", extract_race_information_gps) %>%
-  cluster_assign_value("parse_c51a", parse_c51a) %>%
-  cluster_assign_value("parse_c73", parse_c73) %>%
-  cluster_assign_value("parse_files_for_year", parse_files_for_year) %>%
-  cluster_assign_value("parse_gps", parse_gps) %>%
-  cluster_assign_value("separate_name_birthday_cols", separate_name_birthday_cols)
-
+chip_by_year_partitioned %>% load_library_functions_to_clusters()
 
 # Takes roughly 24.23 when done in parallel
 all_years_parsed <- 
@@ -69,8 +65,14 @@ all_years_parsed <-
   collect() %>% # Special collect() function to recombine partitions
   as_tibble() 
 
+# Takes roughly 57.98 minutes when not done in parallel
+# all_years_parsed <- 
+#     championship_by_year %>%
+#     mutate(data = map(year_directory, parse_files_for_year))
 
-
+#####################
+#### WIDEN DATA #####
+#####################
 all_years_wide <-
   all_years_parsed %>%
   ungroup() %>%
@@ -79,32 +81,19 @@ all_years_wide <-
   unnest() %>%
   make_boats_race_the_observation()
 
-
+#####################
+### AUGMENT DATA ####
+#####################
 all_years_augmented <-
   all_years_wide %>%
   augment_races()
 
 
-
 all_years_augmented %>%
-  count(event_cateogry_abbreviation, weight_class, gender, size, discipline,
-        coxswain, adaptive, adapt_desig, junior) %>%
-  View
-
-all_years_augmented %>%
-  count(round_type) %>%
-  View
-
-all_years_augmented %>%
-  select(matches("time")) %>% summary()
+  mutate_if(is.character, as.factor) %>%
+  summary()
 
 
-all_years_augmented %>% filter(split_3_time == min(split_3_time, na.rm = T))
-
-# Takes roughly 57.98 minutes when not done in parallel
-# all_years_parsed <- 
-#     championship_by_year %>%
-#     mutate(data = map(year_directory, parse_files_for_year))
 
 # for debugging
 # 

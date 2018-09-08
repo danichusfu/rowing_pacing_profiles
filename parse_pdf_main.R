@@ -105,7 +105,7 @@ all_years_augmented %>%
 
 # for debugging
 # 
-# directory <- "scraped_pdfs/2015_world_championships/"
+# directory <- "scraped_pdfs/2010_world_championships/"
 #
 # parse_files_for_year(directory)
 # parse_gps(gps_file_name)

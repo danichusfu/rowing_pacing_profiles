@@ -236,7 +236,7 @@ parse_c73 <- function(c73_file_name){
            split_3_time = str_extract(value, split_time_reg_ex),
            value        = str_remove(value, split_time_reg_ex),
            split_4_time = str_extract(value, split_time_reg_ex)) %>%
-    mutate_at(vars(matches("time")), ~ ms(.) %>% seconds()) %>%
+    mutate_at(vars(matches("time")), ~ ms(., quiet = T) %>% seconds() %>% parse_number()) %>%
     select(-value) 
   
   return(results_parsed)
@@ -283,10 +283,10 @@ parse_files_for_year <- function(directory){
   # for debugging purposes
    # files_parsed <- files_nested %>% mutate(c51a_parsed = map(data, ~ possibly(parse_c51a, otherwise = NA_real_)(.$c51a)))
    # files_parsed %>% filter(is.na(c51a_parsed))
-   #  files_parsed <- files_nested %>% mutate(c73_parsed = map(data, ~ possibly(parse_c73, otherwise = NA_real_)(.$c73)))
-   #  files_parsed %>% filter(is.na(c73_parsed))
-   #  files_parsed <- files_nested %>% mutate(gps_parsed  = map(data, ~ possibly(parse_gps, otherwise = NA_real_)(.$mgps)))
-   #  files_parsed %>% filter(is.na(gps_parsed))
+   # files_parsed <- files_nested %>% mutate(c73_parsed = map(data, ~ possibly(parse_c73, otherwise = NA_real_)(.$c73)))
+   # files_parsed %>% filter(is.na(c73_parsed))
+   # files_parsed <- files_nested %>% mutate(gps_parsed  = map(data, ~ possibly(parse_gps, otherwise = NA_real_)(.$mgps)))
+   # files_parsed %>% filter(is.na(gps_parsed))
   
   files_joined <-
     files_parsed %>%

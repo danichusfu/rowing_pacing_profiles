@@ -48,7 +48,7 @@ extract_race_information_gps <- function(gps_file_name){
   race_date                     <- race_info[2] %>% word(2, -1) %>% dmy()
   championship_name_description <- race_info[3] 
   event_num                     <- race_info[4] %>% word(1)
-  event_cateogry_abbreviation   <- race_info[4] %>% word(2)
+  event_cateogry_abbreviation   <- race_info[4] %>% word(2, -1)
   round                         <- race_info[5]
   race_number                   <- race_info[6] %>% parse_number()
   
@@ -86,7 +86,7 @@ extract_gps_data <- function(gps_file_name, col_names){
     select(1:num_cols) %>%
     rename_all(~ col_names) %>%
     gather(team_lane_measurement_type, measurement, -distance) %>%
-    separate(team_lane_measurement_type, into = c("team", "lane", "measurement_type"), sep = "_")
+    separate(team_lane_measurement_type, into = c("team", "lane_pre_2017", "measurement_type"), sep = "_")
   return(speed_strokes)
 }
 

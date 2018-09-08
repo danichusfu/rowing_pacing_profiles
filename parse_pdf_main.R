@@ -63,7 +63,7 @@ chip_by_year_partitioned %>%
 
 
 start <- proc.time() # Start clock
-all_years_parsed_slow <- 
+all_years_parsed <- 
   chip_by_year_partitioned %>%
   mutate(data = map(year_directory, parse_files_for_year)) %>%
   collect() %>% # Special collect() function to recombine partitions
@@ -71,20 +71,62 @@ all_years_parsed_slow <-
 time_elapsed_series <- proc.time() - start # End clock
 
 
-all_years_cleaned <-
+all_years_wide <-
   all_years_parsed %>%
   ungroup() %>%
   select(-core_group) %>%
   arrange(year) %>%
   unnest() %>%
+  # not all years have measurement severy 25m or every 10m like in some years
+  filter(distance %% 50 == 0) %>%
   unite(measurement_type_distance, measurement_type, distance) %>%
   spread(measurement_type_distance, measurement) %>%
-  filter(!str_detect(name, "cox")) %>%
   unite(name_birthday, name, birthday) %>%
   spread(position, name_birthday) %>%
-  separate_name_birthday_cols() %>%
-  filter(year == 2017) %>%
-  select(speed_1650)
+  separate_name_birthday_cols() 
+
+
+all_years_augmented <-
+  all_years_wide %>%
+  # https://en.wikipedia.org/wiki/Rowing_(sport)#Terminology_and_event_nomenclature
+  mutate(weight_class  = if_else(str_detect(event_cateogry_abbreviation, "L"), "Light", "Open"),
+         gender        = case_when(str_detect(event_cateogry_abbreviation, "W")   ~ "Women",
+                                   str_detect(event_cateogry_abbreviation, "Mix") ~  "Mixed",
+                                   TRUE                                           ~ "Men"),
+         size          = parse_number(event_cateogry_abbreviation),
+         discipline    = if_else(str_detect(event_cateogry_abbreviation, "x$"), "Scull", "Sweep"),
+         coxswain      = if_else(str_detect(event_cateogry_abbreviation, "\\+$"), "Coxed", "Coxless"),
+         # TA Trunks and Arms
+         # PR used to be AS used to be A, Arms and Shoulders
+         # ID intellectually disabled
+         # Legs Trunks and Arms
+         # https://en.wikipedia.org/wiki/Adaptive_rowing
+         adaptive      = if_else(str_detect(event_cateogry_abbreviation, "^PR|^AS|^A|^ID|^TA|^LTA"), T, F),
+         adapt_desig   = case_when(str_detect(event_cateogry_abbreviation, "^PR1|^AS|^A") ~ "arm_shoulder",
+                                   str_detect(event_cateogry_abbreviation, "^ID")         ~ "intel_disab",
+                                   str_detect(event_cateogry_abbreviation, "^PR2|^TA")    ~ "trunk_arm",
+                                   str_detect(event_cateogry_abbreviation, "^PR3|^LTA")   ~ "leg_trunk_arm",
+                                   TRUE                                                   ~ "not_para"),
+         junior        = if_else(str_detect(event_cateogry_abbreviation, "^J"), TRUE, FALSE))
+
+all_years_augmented %>%
+  count(event_category, event_cateogry_abbreviation, weight_class, gender, size, discipline,
+        coxswain,para, para_desig, junior) %>%
+  View
+
+all_years_augmented %>%
+  count(round)
+# 
+#          para = if_else(str_detect(race_cat_abr, "PR"), T, F),
+# round_cat = case_when(str_detect(round, "F") ~ "Final",
+#                       str_detect(round, "H") ~ "Heat",
+#                       str_detect(round, "Q") ~ "Quarterfinal",
+#                       str_detect(round, "R") ~ "Repecharge",
+#                       str_detect(round, "\\d") ~ "SemiFinal",
+#                       str_detect(round, "X") ~ "Exhibition"),
+# round_cat_2 = if_else(round_cat == "Final", "Final", "Heat"),
+
+
 
 
 start_slow <- proc.time() # Start clock
@@ -103,8 +145,8 @@ all_years_parsed_slow <-
 # 
 # 
 # 
-# gps_file_name <- "scraped_pdfs/2017_world_championships/ROM012101_MGPS.pdf"
+# gps_file_name <- "scraped_pdfs/2017_world_championships/ROXR43P01_MGPS.pdf"
 # 
-# c73_file_name <- "scraped_pdfs/2010_world_championships/ROM083101_C73.pdf"
+# c73_file_name <- "scraped_pdfs/2017_world_championships/ROM012101_C73.pdf"
 # 
-# c51a_file_name <- "scraped_pdfs/2010_world_championships/ROM083101_C51A.pdf"
+# c51a_file_name <- "scraped_pdfs/2017_world_championships/ROM012101_C51A.pdf"

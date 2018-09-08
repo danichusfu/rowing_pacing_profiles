@@ -284,7 +284,11 @@ parse_files_for_year <- function(directory){
   files_joined <-
     files_parsed %>%
     mutate(data_joined = map2(c51a_parsed, c73_parsed, ~ full_join(.x, .y, by = c("team", "lane"))),
-           data_joined = map2(data_joined, gps_parsed, ~ full_join(.x, .y, by = c("team", "lane"))))
+           # in 2017 they stopped listing boats in their lane order in the gps tables
+           # as far as i can tell from looking at tables like this http://www.worldrowing.com/assets/pdfs/WCH_2017/RO0000000_C30A.pdf
+           # only one entry into each category by country
+           # so there should never be two of the same country in the race
+           data_joined = map2(data_joined, gps_parsed, ~ full_join(.x, .y, by = c("team"))))
   
   files_cleaned <-
     files_joined %>%

@@ -62,13 +62,16 @@ chip_by_year_partitioned %>%
   cluster_assign_value("separate_name_birthday_cols", separate_name_birthday_cols)
 
 
-start_slow <- proc.time() # Start clock
+start <- proc.time() # Start clock
 all_years_parsed_slow <- 
   chip_by_year_partitioned %>%
-  mutate(data = map(year_directory, parse_files_for_year))
-time_elapsed_series_slow <- proc.time() - start_slow # End clock
+  mutate(data = map(year_directory, parse_files_for_year)) %>%
+  collect() %>% # Special collect() function to recombine partitions
+  as_tibble() 
+time_elapsed_series <- proc.time() - start # End clock
 
-all_years_cleaned 
+
+all_years_cleaned <-
   all_years_parsed %>%
   ungroup() %>%
   select(-core_group) %>%
@@ -84,7 +87,11 @@ all_years_cleaned
   select(speed_1650)
 
 
-
+start_slow <- proc.time() # Start clock
+all_years_parsed_slow <- 
+    championship_by_year %>%
+    mutate(data = map(year_directory, parse_files_for_year)) 
+  time_elapsed_series_slow <- proc.time() - start_slow # End clock
 # for debugging
 # 
 # directory <- "scraped_pdfs/2015_world_championships/"

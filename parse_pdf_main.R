@@ -95,8 +95,11 @@ all_years_augmented %>%
   count(round_type) %>%
   View
 
+all_years_augmented %>%
+  select(matches("time")) %>% summary()
 
 
+all_years_augmented %>% filter(split_3_time == min(split_3_time, na.rm = T))
 
 # Takes roughly 57.98 minutes when not done in parallel
 # all_years_parsed <- 
@@ -116,6 +119,6 @@ all_years_augmented %>%
 # 
 # gps_file_name <- "scraped_pdfs/2017_world_championships/ROXR43P01_MGPS.pdf"
 # 
-# c73_file_name <- "scraped_pdfs/2017_world_championships/ROM012206_C73.pdf"
+# c73_file_name <- "scraped_pdfs/2017_world_championships/ROWP12102_C73.pdf"
 # 
 # c51a_file_name <- "scraped_pdfs/2017_world_championships/ROM012101_C51A.pdf"

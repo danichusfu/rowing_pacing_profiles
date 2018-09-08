@@ -207,7 +207,7 @@ parse_c73 <- function(c73_file_name){
   possible_progressions_reg_ex <- paste0("(?<= )", possible_progressions, "($| WB$)") %>% glue_collapse("|")
   # sometimes rank is missing if they did not start
   lane_team_reg_ex  <- "\\d [[:upper:]]{3}"
-  split_time_reg_ex <- "\\d\\:\\d{2}\\.\\d{2}"
+  split_time_reg_ex <- "\\d{1,2}\\:\\d{2}\\.\\d{2}"
 
   c73_info <-
     pdf_text(c73_file_name) %>% 

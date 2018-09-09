@@ -88,10 +88,10 @@ all_years_augmented <-
   all_years_wide %>%
   augment_races()
 
-
-all_years_augmented %>%
-  mutate_if(is.character, as.factor) %>%
-  summary()
+#####################
+##### SAVE DATA #####
+#####################
+write_csv(all_years_augmented, "rowing_world_championships.csv")
 
 
 

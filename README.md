@@ -7,4 +7,7 @@ Repository for World Rowing Championship Pacing Profile Project
 or
 
 1. Skip these steps and use rowing_world_championships.csv
+
+Next
+
 3. Analyze data (in progress)

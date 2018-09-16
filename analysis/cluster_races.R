@@ -93,7 +93,7 @@ races_plotable <-
   gather("distance", "speed", matches("speed_\\d{2,4}_std")) %>%
   mutate(distance = parse_number(distance)) 
 
-write_rds(races_plotable, "paper/data/races_plotable.rds")
+write_rds(races_plotable, "paper/data/races_plotable.rds", "xz", compression = 9L)
 
 races_plotable %>%
   ggplot(aes(x = distance, y = speed, colour = cluster, group = row_number)) +

@@ -10,4 +10,5 @@ or
 
 Next
 
-3. Analyze data (in progress)
+3. Cluster data using cluster_races.R
+4. Review results and make plots (In progress)

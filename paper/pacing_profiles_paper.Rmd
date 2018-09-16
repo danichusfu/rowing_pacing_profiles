@@ -8,7 +8,6 @@ output:
     fig_caption: true
     latex_engine: pdflatex
 # http://svmiller.com/blog/2016/02/svm-r-markdown-manuscript/
-# Steven V Miller for template
 #    template: svm-latex-ms.tex
 title: "Pacing Profiles in 2000 Meter World Championship Rowing"
 thanks: "Thank you to the CMSAC for hosting this reproudcible research competition. All work should be reproducible and can be replicated by using code in my anonymized for right now github repository"
@@ -30,11 +29,9 @@ fontfamily: mathpazo
 fontsize: 11pt
 #spacing: double
 #header-includes:
-#   - \usepackage{setspace}
-#   - \doublespacing
-bibliography: bibliography.bib
+bibliography: ../paper/bibliography.bib
 # https://github.com/citation-style-language/styles
-csl: apa-5th-edition.csl
+csl: ../paper/apa-5th-edition.csl
 editor_options: 
   chunk_output_type: console
 ---

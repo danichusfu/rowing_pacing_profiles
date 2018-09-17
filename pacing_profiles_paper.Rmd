@@ -264,7 +264,7 @@ cluster_centroids %>%
 ```
 
 ```{r, cluster_centroid_plot_5, fig.cap = "Cluster Centroids for k-Shape Clustering with 5 Clusters" }
-ccluster_centroids %>%
+cluster_centroids %>%
   filter(num_clusters == 5) %>%
   mutate(cluster_label = glue("Cluster {cluster}")) %>%
   ggplot(aes(x = split, y = speed, colour = cluster)) +

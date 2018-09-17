@@ -11,22 +11,15 @@ output:
 #    template: svm-latex-ms.tex
 title: "Pacing Profiles in 2000 Meter World Championship Rowing"
 thanks: "Thank you to the CMSAC for hosting this reproudcible research competition. All work should be reproducible and can be replicated by using code in my anonymized for right now github repository"
-#author:
-#- name: "Dani Chu"
-#  affiliation: "Simon Fraser University"
-#- name: "Ryan Sheehan"
-#  affiliation: "Simon Fraser University"
-#- name: "Ming-Chang Tsai"
-#  affiliation: "Canadian Sport Institute Pacific"
-#- name: "Michael Jack Davis"
-#  affiliation: "Simon Fraser University"
+author: 
+-  Dani Chu\textsuperscript{1}, Ryan Sheehan\textsuperscript{1}, Ming-Chang Tsai\textsuperscript{2,3} and Michael Jack Davis\textsuperscript{1} \ \small \textsuperscript{1}Department of Statistics and Actuarial Sciences, Simon Fraser University, \textsuperscript{2}Canadian Sport Institue Pacifc, \textsuperscript{3}University of Toronto
 abstract: "The pacing strategy adopted by an athlete(s) is one of the major determinants of successful performance during timed competition. Various pacing profiles are reported in the literature and its potential to precede a winning performance depends on the mode of sport. However, in 2000 meter rowing, the definition of these pacing profiles has been subjective and there is a need to be more objective with the definition. Our aim is to objectively identify pacing profiles used in World Championship 2000 meter rowing races. To do this the average speed and stroke rate (SR) for each 50 meter split for each boat in every race of the Rowing World Championships from 2010-2017 was Scraped from www.worldrowing.com. Pacing profiles are determined by using k-Shape clustering on the average boat speeds at each 50 meter split. Finally, clusters are described using boat and race descriptors to draw conclusions about who, when and why each pacing profile was observed. Chi-Squared Tests of Independence with Bonferroni corrections are used to test whether variables such as boat size, gender, round, or rank are associated with pacing profiles. Four pacing strategies (Even, Positive, Reverse J-Shaped and U-Shaped) are identified from the clustering process. Boat size, round (Heat vs Finals) and rank are all found to affect pacing profiles. Whereas, gender, and weight class do not affect a boat’s pacing profile. This novel approach of using clustering is able to objectively define four strategies used in 2000 meter rowing competitions. \\par
  \\textbf{Keywords:} rowing, pacing profiles, k-Shape clustering, race analysis"
 #keywords: "rowing, pacing profiles, race analysis, k-Shape clustering"
 date: "`r lubridate::today()`"
 geometry: margin = 1in
-fontfamily: mathpazo
-fontsize: 11pt
+fontfamily: paper/mathpazo
+fontsize: 12pt
 #spacing: double
 #header-includes:
 bibliography: paper/bibliography.bib
@@ -39,7 +32,7 @@ editor_options:
 \pagebreak
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, out.width='80%', fig.asp=.75, fig.align='center')
 pacman::p_load(tidyverse, pander, glue)
 
 theme_set(theme_bw())
@@ -214,7 +207,7 @@ Now that we have identified and named the profiles. We will shift to examining w
 
 ### Size of Boats
 
-```{r, size_of_boat_table, fig.caption = ""}
+```{r, size_of_boat_table}
 races_clustered %>%
   count(cluster, size) %>% 
   spread(size,  n) %>%
@@ -285,7 +278,7 @@ cluster_centroids %>%
 
 ---
 nocite: | 
-  @tidyverse, @glue, @lubridate, @dtwclust, @pdftools, @devtools, @remotes, @rJava, @tabulizer, @multidplyr, @R, @knitr @ggplot2 @pander
+  @tidyverse, @glue, @lubridate, @dtwclust, @pdftools, @devtools, @remotes, @rJava, @tabulizer, @multidplyr, @R, @knitr, @ggplot2, @pander, @tinytex
 ...
 
 ```{r citations, include = FALSE}

@@ -11,12 +11,17 @@ races_train <-
   unite(round_rank, heat_or_final, rank_final, remove = FALSE) %>%
   mutate_all(as.factor)
 
-model <- nnet::multinom(cluster ~ size + heat_or_final + rank_final + discipline + coxswain + gender + weight_class, data = races_train)
-model <- nnet::multinom(cluster ~ size + heat_or_final + rank_final + round_rank + discipline + coxswain + gender + weight_class, data = races_train)
+# full with interaction
 # model <- nnet::multinom(cluster ~ size + heat_or_final*rank_final + discipline + coxswain + gender + weight_class, data = races_train)
-# model <- nnet::multinom(cluster ~ size + heat_or_final + discipline + coxswain + gender + weight_class, data = races_train)
-# model <- nnet::multinom(cluster ~ size + heat_or_final + rank_final + weight_class, data = races_train)
+# iteraction without coxswain (it only varies with size at the 2 boat level)
+# model <- nnet::multinom(cluster ~ size + heat_or_final*rank_final + discipline + gender + weight_class, data = races_train)
+# full
+model <- nnet::multinom(cluster ~ size + heat_or_final + rank_final + discipline + gender + weight_class, data = races_train)
+# Intercept Model
 # model <- nnet::multinom(cluster ~ 1, data = races_train)
+
+model$AIC
+model$value
 
 # Model accuracy
 model_fit <-
@@ -25,22 +30,14 @@ model_fit <-
   mutate(predicted_cluster = predict(model, races_train),
          actual_cluster = races_train$cluster)
 
-model_fit %>%
-  select(-predicted_cluster) %>%
-  gather(cluster, value, - actual_cluster) %>%
-  filter(actual_cluster == cluster) %>%
-  summarise(cost_function = -1*sum(log(value)))
-
-model$AIC
-
-summary(model)
+exp(coef(model))
 
 # https://stats.idre.ucla.edu/r/dae/multinomial-logistic-regression/
-z <- summary(model)$coefficients/summary(model)$standard.errors
+z <- coef(model)/summary(model)$standard.errors
 p <- (1 - pnorm(abs(z), 0, 1)) * 2
 p
 
-0.05/25 > p
+17*0.05/39 > p
 
 
 model_fit %>%

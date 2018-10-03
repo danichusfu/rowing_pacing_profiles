@@ -13,8 +13,7 @@ title: "Pacing Profiles in 2000 Meter World Championship Rowing"
 thanks: "Thank you to the CMSAC for hosting this reproudcible research competition. All work should be reproducible and can be replicated by using code in my anonymized for right now github repository"
 author: 
 -  Dani Chu\textsuperscript{1}, Ryan Sheehan\textsuperscript{1}, Ming-Chang Tsai\textsuperscript{2,3} and Michael Jack Davis\textsuperscript{1} \ \small \textsuperscript{1}Department of Statistics and Actuarial Sciences, Simon Fraser University, \textsuperscript{2}Canadian Sport Institue Pacifc, \textsuperscript{3}University of Toronto
-abstract: "The pacing strategy adopted by an athlete(s) is one of the major determinants of successful performance during timed competition. Various pacing profiles are reported in the literature and its potential to precede a winning performance depends on the mode of sport. However, in 2000 meter rowing, the definition of these pacing profiles has been subjective and there is a need to be more objective with the definition. Our aim is to objectively identify pacing profiles used in World Championship 2000 meter rowing races. To do this the average speed and stroke rate (SR) for each 50 meter split for each boat in every race of the Rowing World Championships from 2010-2017 was Scraped from www.worldrowing.com. Pacing profiles are determined by using k-Shape clustering on the average boat speeds at each 50 meter split. Finally, clusters are described using boat and race descriptors to draw conclusions about who, when and why each pacing profile was observed. Chi-Squared Tests of Independence with Bonferroni corrections are used to test whether variables such as boat size, gender, round, or rank are associated with pacing profiles. Four pacing strategies (Even, Positive, Reverse J-Shaped and U-Shaped) are identified from the clustering process. Boat size, round (Heat vs Finals) and rank are all found to affect pacing profiles. Whereas, gender, and weight class do not affect a boat’s pacing profile. This novel approach of using clustering is able to objectively define four strategies used in 2000 meter rowing competitions. \\par
- \\textbf{Keywords:} rowing, pacing profiles, k-Shape clustering, race analysis"
+abstract: "The pacing strategy adopted by an athlete(s) is one of the major determinants of successful performance during timed competition. Various pacing profiles are reported in the literature and its potential to precede a winning performance depends on the mode of sport. However, in 2000 meter rowing, the definition of these pacing profiles has been subjective and there is a need to be more objective with the definition. Our aim is to objectively identify pacing profiles used in World Championship 2000 meter rowing races. To do this the average speed and stroke rate (SR) for each 50 meter split for each boat in every race of the Rowing World Championships from 2010-2017 was Scraped from www.worldrowing.com. Pacing profiles are determined by using k-Shape clustering on the average boat speeds at each 50 meter split. Finally, clusters are described using boat and race descriptors to draw conclusions about who, when and why each pacing profile was observed. A Multinomial Logistic Regression is then fit with Bonferroni corrections used on the tests of significance to test whether variables such as boat size, gender, round, or rank are associated with pacing profiles. Four pacing strategies (Even, Positive, Reverse J-Shaped and U-Shaped) are identified from the clustering process. Boat size, round (Heat vs Finals) and rank are all found to affect pacing profiles. Whereas, gender, and weight class do not affect a boat’s pacing profile. This novel approach of using clustering is able to objectively define four strategies used in 2000 meter rowing competitions. \\par \\textit{\\textbf{Keywords:}} rowing, pacing profiles, k-Shape clustering, multinomial logistic regression, race analysis"
 #keywords: "rowing, pacing profiles, race analysis, k-Shape clustering"
 date: "`r lubridate::today()`"
 geometry: margin = 1in
@@ -32,7 +31,7 @@ editor_options:
 \pagebreak
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, out.width='80%', fig.asp=.75, fig.align='center')
+knitr::opts_chunk$set(echo = FALSE, out.width='80%', fig.asp=.75, fig.align='center', warning = FALSE)
 pacman::p_load(tidyverse, pander, glue)
 
 theme_set(theme_bw())
@@ -45,6 +44,7 @@ colour_palette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55
 races_plotable    <- read_rds("paper/data/races_plotable.rds")
 cluster_centroids <- read_rds("paper/data/cluster_centroids.rds")
 races_clustered   <- read_rds("paper/data/races_clustered.rds")
+chi_squared_results_table <- read_rds( "paper/data/chi_squared_results_table.rds")
 
 
 ```
@@ -170,7 +170,7 @@ cluster_centroids %>%
     geom_step(size = 1) +
     scale_color_manual("Cluster", values = colour_palette) + 
     xlab("Distance (meters)") +
-    ylab("Normalized Speed by Race") +
+    ylab("Normalized Speed") +
     ggtitle("Cluster Centroids for k = 4") +
     facet_wrap(~ cluster_label) +
     theme(legend.position = "none")
@@ -194,7 +194,7 @@ races_plotable %>%
   ggplot(aes(x = distance, y = speed, colour = cluster, group = row_number)) +
   geom_line(alpha = 0.05) +
   xlab("Distance (m)") +
-  ylab("Speed (m/s)") +
+  ylab("Normalized Speed") +
   scale_color_manual("Cluster", values = colour_palette) +
   facet_wrap(~ cluster)  +
   theme(legend.position = "none")
@@ -207,15 +207,60 @@ Now that we have identified and named the profiles. We will shift to examining w
 
 ### Size of Boats
 
+The first factor that we look into is the size of the boats in the race. One could argue that it is a different sport whent there is a different number of atheltes in the boat. An 8 person boat requires rhythm and coordination across all 8 members. On the other hand a boat with only 1 athlete has no one else to coordinate with. This gives them more control to change pace. We can see that in the cross tabulation table that there does seem to be an effect.
+
 ```{r, size_of_boat_table}
-races_clustered %>%
+pacing_profile_by_size <- 
+  races_clustered %>%
   count(cluster, size) %>% 
-  spread(size,  n) %>%
-  rename(`cluster/size` = cluster) %>%
-  pander(caption = " ")
+  spread(size,  n)
+
+pacing_profile_by_size %>%
+  rename(`Pacing Profile/Size` = cluster) %>%
+  pander(caption = "Number of boats per pacing profile given size of boat")
 ```
 
-### Round of Race
+To test if pacing profiles are distributed identically across the populations of different sized boats we will use a Chi-Square Test of Homogeneity. We can see in the table below that our hypothesis that the distribution of observed pacing profiles will vary with boat size is verified.
+
+```{r, size_of_boat_test}
+pacing_profile_by_size <- pacing_profile_by_size %>% select(-cluster)
+
+chisq.test(pacing_profile_by_size) %>% pander(caption = "Pearson's Chi-squared test: Pacing Profiles by Size")
+```
+
+Since we will be doing many of these tests it is common practice to scale the p-value which we accept for statistical significance through a Bonerroni Correction. In the next section we will present the results of all the tests that we have run. We will then pressent a discussion of these results and how it relates to the races.
+
+```{r, size_of_boat_plot, fig.caption = "Pacing Profiles by Size of boat"}
+races_clustered %>%
+  mutate(size_label = glue("{size} person boat")) %>%
+  ggplot(aes(fill = cluster, x = cluster)) +
+  geom_bar(stat = "count", position = "dodge") +
+    facet_wrap(~ size_label, scales = "free") +
+    coord_flip() +
+    ylab("Count") +
+    xlab("Class") +
+    scale_fill_manual(name = "Pacing Profile:", values = colour_palette) +
+    theme(axis.text.y = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks.y = element_blank()) 
+```
+
+# Test Results
+
+```{r, test_results}
+chi_squared_results_table %>%
+  rename(Size = sizes, Variable = factors, `p-value` = p_value, `Desired p-value` = desired_p, `Significant` = significant) %>%
+  pander(caption = "p-values for chi-squared tests of homogeneity")
+```
+
+
+```{r, logistic_regression}
+
+```
+
+
+
+### Round of Race (Heat or Final)
 
 ### Final Placement
 

@@ -55,7 +55,8 @@ cluster_centroids <-
   unnest() %>%
   mutate(split = row_number() * 50) %>%
   gather(cluster_num_clusters, speed, matches("\\d_\\d")) %>%
-  separate(cluster_num_clusters, c("cluster", "num_clusters"), sep = "_")
+  separate(cluster_num_clusters, c("cluster", "num_clusters"), sep = "_") %>%
+  mutate(cluster = fct_relevel(cluster, "2", "3", "4", "1", "5"))
 
 write_rds(cluster_centroids, "paper/data/cluster_centroids.rds")
 
@@ -75,6 +76,15 @@ races_clustered <-
                              cluster == 3 ~ "Positive",
                              cluster == 4 ~ "Reverse J-Shaped")) %>%
   left_join(races_standardized, by = "row_number", suffix = c("", "_std"))
+
+
+# races_clustered <- 
+#   races_cleaned %>%
+#   mutate(cluster = clusters_3@cluster,
+#          cluster = case_when(cluster == 1 ~ "Even",
+#                              cluster == 2 ~ "Parabolic",
+#                              cluster == 3 ~ "Positive")) %>%
+#   left_join(races_standardized, by = "row_number", suffix = c("", "_std"))
   
 
 write_rds(races_clustered, "paper/data/races_clustered.rds")
@@ -102,4 +112,32 @@ races_plotable %>%
   ylab("Speed (m/s)") +
   scale_color_manual("Cluster", values = colour_palette) +
   facet_wrap(~ cluster)
+
+
+cross_tab_cluster_for_column <- function(data, column){
+  column <- sym(column)
+  table <- 
+    count(data, cluster, !!column) %>%
+    spread(!!column, n)%>%
+    select(-cluster) %>%
+    mutate_all(~ replace_na(., 0))
+  return(table)
+}
+
+sizes <- c(1, 2, 4, 8)  
+factors <- c("heat_or_final", "rank_final", "discipline", "gender", "weight_class", "adaptive", "adapt_desig", "junior")
+
+chi_squared_results_table <- 
+  crossing(sizes, factors) %>%
+  mutate(data = list(races_clustered),
+         data = map2(data, sizes, ~ filter(.x, size == .y)),
+         table = map2(data, factors, ~ cross_tab_cluster_for_column(.x, .y)),
+         chi_2_results = map(table, chisq.test),
+         p_value = map(chi_2_results, ~ .x$p.value)) %>%
+  select(sizes, factors, p_value) %>%
+  unnest() %>%
+  mutate(desired_p = 0.01/(n() + 1),
+         significant = p_value < desired_p)
+
+write_rds(chi_squared_results_table, "paper/data/chi_squared_results_table.rds")
 

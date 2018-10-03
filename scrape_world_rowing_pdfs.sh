@@ -10,7 +10,7 @@
 head=http://www.worldrowing.com
 
 # for years when world rowing started collecting data
-for year in {2010..2017}
+for year in {2010..2018}
 do
 	# directory name
 	dir="./scraped_pdfs/"$year"_world_championships/"

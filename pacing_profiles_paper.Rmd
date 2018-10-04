@@ -17,7 +17,7 @@ abstract: "The pacing strategy adopted by an athlete(s) is one of the major dete
 #keywords: "rowing, pacing profiles, race analysis, k-Shape clustering"
 date: "`r lubridate::today()`"
 geometry: margin = 1in
-fontfamily: paper/mathpazo
+#fontfamily: paper/mathpazo
 fontsize: 12pt
 #spacing: double
 #header-includes:
@@ -44,9 +44,8 @@ colour_palette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55
 races_plotable    <- read_rds("paper/data/races_plotable.rds")
 cluster_centroids <- read_rds("paper/data/cluster_centroids.rds")
 races_clustered   <- read_rds("paper/data/races_clustered.rds")
-chi_squared_results_table <- read_rds( "paper/data/chi_squared_results_table.rds")
-
-
+relative_odds     <- read_rds("paper/data/relative_odds.rds")
+significance_test <- read_rds("paper/data/significance_test.rds")
 ```
 
 
@@ -151,7 +150,7 @@ k-Shape then functions very similarly to the k-means algorithm [@kmeans] in the 
 
 # Clustering Results
 
-We performed k-Shape clustering for k = 3, 4, and 5. We found that k = 4 gave us the most distinct shapes. The k-shape clustering algorithm converges, there is an iteration where cluster memberships do not change, for our given seed. The size of the clusters and average distance are reported in Table 2.
+We performed k-Shape clustering for k = 3, 4, and 5. We found that k = 4 gave us the most distinct shapes. The k-shape clustering algorithm converges, there is an iteration where cluster memberships do not change, for our given seed. The size of the clusters and average distance between rows in each cluster are reported in Table 2.
 
 
 ```{r, cluster_summary}
@@ -181,13 +180,13 @@ cluster_centroids %>%
 
 We will now name the clusters based on the definitions given by Abbiss [@Abbiss]. 
 
-Cluster 1 is defined by a slow accelartion to a moderate peak velocity, a slow middle section and a final sprint that almost reaches peak velocity. This coordiantes with the definition of the U-Shaped Pacing profile.
+**Cluster 1** is defined by a slow accelartion to a moderate peak velocity, a slow middle section and a final sprint that almost reaches peak velocity. This coordiantes with the definition of the U-Shaped Pacing profile.
 
-Cluster 2 is defined by a slower acceleration, a smaller peak velocity and a low variance in speed throughout the rest of the race. This aligns with the definition of the Even Pacing profile.
+**Cluster 2** is defined by a slower acceleration, a smaller peak velocity and a low variance in speed throughout the rest of the race. This aligns with the definition of the Even Pacing profile.
 
-Cluster 3 is defined by an acceleartion to top speed in the first 150 meters and a decline in speed for every proceeding split. This fits with the definition of the Positive Pacing profile.
+**Cluster 3** is defined by an acceleartion to top speed in the first 150 meters and a decline in speed for every proceeding split. This fits with the definition of the Positive Pacing profile.
 
-Cluster 4 is defined by a quick acceleration to a higher peak velocity, a slower middle portion of the event and finally a faster push to the finish. This matches the definition of the Reverse J-Shaped Pacing profile.
+**Cluster 4** is defined by a quick acceleration to a higher peak velocity, a slower middle portion of the event and finally a faster push to the finish. This matches the definition of the Reverse J-Shaped Pacing profile.
 
 ```{r, all_races_named, fig.cap = "Pacing Profiles for k-Shape Clustering with 4 Clusters"}
 races_plotable %>%
@@ -207,28 +206,7 @@ Now that we have identified and named the profiles. We will shift to examining w
 
 ### Size of Boats
 
-The first factor that we look into is the size of the boats in the race. One could argue that it is a different sport whent there is a different number of atheltes in the boat. An 8 person boat requires rhythm and coordination across all 8 members. On the other hand a boat with only 1 athlete has no one else to coordinate with. This gives them more control to change pace. We can see that in the cross tabulation table that there does seem to be an effect.
-
-```{r, size_of_boat_table}
-pacing_profile_by_size <- 
-  races_clustered %>%
-  count(cluster, size) %>% 
-  spread(size,  n)
-
-pacing_profile_by_size %>%
-  rename(`Pacing Profile/Size` = cluster) %>%
-  pander(caption = "Number of boats per pacing profile given size of boat")
-```
-
-To test if pacing profiles are distributed identically across the populations of different sized boats we will use a Chi-Square Test of Homogeneity. We can see in the table below that our hypothesis that the distribution of observed pacing profiles will vary with boat size is verified.
-
-```{r, size_of_boat_test}
-pacing_profile_by_size <- pacing_profile_by_size %>% select(-cluster)
-
-chisq.test(pacing_profile_by_size) %>% pander(caption = "Pearson's Chi-squared test: Pacing Profiles by Size")
-```
-
-Since we will be doing many of these tests it is common practice to scale the p-value which we accept for statistical significance through a Bonerroni Correction. In the next section we will present the results of all the tests that we have run. We will then pressent a discussion of these results and how it relates to the races.
+The first factor that we look into is the size of the boats in the race. One could argue that it is a different sport when there is a different number of atheltes in the boat. An 8 person boat requires rhythm and coordination across all 8 members. On the other hand a boat with only 1 athlete has no one else to coordinate with. This gives them more control to change pace at will. We can see that in the plot below that there does seem to be an effect.
 
 ```{r, size_of_boat_plot, fig.caption = "Pacing Profiles by Size of boat"}
 races_clustered %>%
@@ -245,46 +223,75 @@ races_clustered %>%
           axis.ticks.y = element_blank()) 
 ```
 
-# Test Results
+An 8 person boat is relatively more liekly to exhibit a "Even" pacing profile than a "Positive" pacing profile. What we will do next is try to untangle what boat and race chracteristics affect the pacing profile that a boat exhibits.
 
-```{r, test_results}
-chi_squared_results_table %>%
-  rename(Size = sizes, Variable = factors, `p-value` = p_value, `Desired p-value` = desired_p, `Significant` = significant) %>%
-  pander(caption = "p-values for chi-squared tests of homogeneity")
-```
+# Multinomial Logistic Regression
 
+A multinomial logistic regression was fit with pacing profile as a dependent variable on the boat size, race placement in a heat or final, discipline, gender and weight class variables. Below we report the odds ratio for each variable in the model. 
 
 ```{r, logistic_regression}
+panderOptions("table.continues", "")
+emphasize.strong.cells(which(significance_test, arr.ind = TRUE))
+
+relative_odds %>%
+  as_tibble(rownames = NA) %>%
+  rename(Intercept = `(Intercept)`, `Size: 2 person` = size2, `Size: 4 person` = size4, 
+         `Size: 8 person` = size8, `Heat or Final: Heat` = heat_or_finalheat, 
+         `Race Placement: 2nd Place` = rank_final2, `Race Placement: 3rd Place` = rank_final3,
+         `Race Placement: 4th Place` = rank_final4, `Race Placement: 5th Place` = rank_final5,
+         `Race Placement: 6th Place` = rank_final6, `Discipline: Sweep` = disciplinesweep,
+         `Gender: Women` = genderwomen, `Weight Class: Open` = weight_classopen) %>%
+  pander(caption = "Odds ratio changed by each variable holding all others constant, statistically significant entries are bolded")
 
 ```
 
+To explain how to interpret these numbers we will use the boat size variable as an example. The first thing to note is that there is no results reported for the "Even" pacing profile. This is because it is used as our baseline level. Additionally, there is no column for size 1 boats. This is because the size 1 boats are the baseline for the boat size variable. 
 
+So if we first look at the value for the "Positive" pacing profile for the size 8 boats. The odds that a size 8 boat would follow a "Positive" pacing profile is 0.03 times smaller than the odds that a 1 person boat would follow an "Even" pacing profile holding all other variables constant. We can see that since all odds ratios for the size 8 boats are less than 1 that an 8 person boat is most likely to exhibit an "Even" pacing profile. This aligns with what we saw in the graph.
 
 ### Round of Race (Heat or Final)
 
-### Final Placement
+Next we can see that holding all other variables constant that the "Positive" pacing profile is nearly 2 times more likely to be used in a heat then a final. This would make sense as boat's that are in heats are more likely to want to conserve their energy for their future races. Interestingly, in rowing there is a rule that disqualifies boats that are not "trying their hardest" throughout the race (NEED CITATION). This shows that boats are using a pacing profile with positive split times in heats but this could be intentional or unitentional.
 
-### 1st Half Rankings
+### Race Placement
+
+Next where a boat finished in the race seems to have an effect on the selection of pacing profile. The basline in this case is boats that came in 1st place. The questions is whether this would affect how the boat would pace themselves. There is no significant different between pacing profiles chosen by 1st place and 2nd palce boats. 3rd place boats have a similar distribution but are more likely to have a "U-Shaped" pacing profile. 4th, 5th and 6th place boats have a wildly different distribution of odds to follow a given pacing profile. One explanation could be that in most races, the first 3 boats are the ones to qualify for the next race. It would therefore make sense if they followed a similar distribution of pacing profiles. Unfortunately looking for an interaction between these two variables would require more data than we have available and so we leave this for further investigation.
 
 ### Discipline
 
+A boat's disicipline is either called a "Stroke" or a "Sweep". "Stroke" describes a boat where rowers use 2 oars and "Sweep" describes boats where rowers have only one oar each. We see that "Positive" and "U-Shaped" pacing profiles are more likely in "Sweep" boats than "Stroke" boats.
+
 ### Gender
+
+Women were statistically less likely to follow "Even" pacing profiles. 
 
 ### Weight Class
 
-### Stroke Rate
+The "Open" weight class also saw a different distribution of pacing profiles compared to the "Lightweight" class after acounting for the other variables. Holding the other variables the "Positive" and "Reverse J-Shaped" pacing profile were more likely to be used.
 
-### Adaptive Races
 
 # Conclusions
 
+We identified pacing profiles in a more robust specific way.
+
+We found which variables affected the likelihood of following a given pacing profile and by how much
+
+
+
 # Future Research
+
+Investigate optimal pacing profiles using testing now that pacing profiles have been identified.
+
+Investigate progression of pacing profiles for boats throughout an event.
 
 ## Data Accessibility
 
-## Extending the Methods
+The other contribution of this work is not only the analysis and identification of these observed pacing profiles but the data that is now accessible for use in futher research by the open community. We welcome other researchers to not only check over our work but further the field of analytics in rowing by using the rich dataset provided at https://github.com/danichusfu/rowing_pacing_profiles. Not only is the data available in csv format, but the code to scrape the pdfs from www.worldrowing.com, and extract the data from the pdfs. This way the data is avaiable for use and our work can be improved upon to grab more data of interest from the pdfs.
+
 
 # Acknowledgements
+
+We would like to thank Dr. Dave Clarke for organizing the partnership with CSIP, Chuck Rai for his incredible help with scraping data and Lucas Wu and Kevin Floyd for their consultations on statistics and rowing strategies. We would also like to thank Ron Yurko, Sam Ventura and the Carnegie Mellon Sports Analytics Club for hosting the reproducible research competition that pushed us to make our work reproducible and available to the public. We acknowledge the support of the Natural Sciences and Engineering Research Council of Canada (NSERC) where they support Dani Chu with the Alexander Graham Bell Master's Scholarship.
 
 # Appendix
 

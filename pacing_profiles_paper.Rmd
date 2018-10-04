@@ -13,7 +13,7 @@ title: "Pacing Profiles in 2000 Meter World Championship Rowing"
 thanks: "Thank you to the CMSAC for hosting this reproudcible research competition. All work should be reproducible and can be replicated by using code in my anonymized for right now github repository"
 author: 
 -  Dani Chu\textsuperscript{1}, Ryan Sheehan\textsuperscript{1}, Ming-Chang Tsai\textsuperscript{2,3} and Michael Jack Davis\textsuperscript{1} \ \small \textsuperscript{1}Department of Statistics and Actuarial Sciences, Simon Fraser University, \textsuperscript{2}Canadian Sport Institue Pacifc, \textsuperscript{3}University of Toronto
-abstract: "The pacing strategy adopted by an athlete(s) is one of the major determinants of successful performance during timed competition. Various pacing profiles are reported in the literature and its potential to precede a winning performance depends on the mode of sport. However, in 2000 meter rowing, the definition of these pacing profiles has been subjective and there is a need to be more objective with the definition. Our aim is to objectively identify pacing profiles used in World Championship 2000 meter rowing races. To do this the average speed and stroke rate (SR) for each 50 meter split for each boat in every race of the Rowing World Championships from 2010-2017 was Scraped from www.worldrowing.com. Pacing profiles are determined by using k-Shape clustering on the average boat speeds at each 50 meter split. Finally, clusters are described using boat and race descriptors to draw conclusions about who, when and why each pacing profile was observed. A Multinomial Logistic Regression is then fit with Bonferroni corrections used on the tests of significance to test whether variables such as boat size, gender, round, or rank are associated with pacing profiles. Four pacing strategies (Even, Positive, Reverse J-Shaped and U-Shaped) are identified from the clustering process. Boat size, round (Heat vs Finals) and rank are all found to affect pacing profiles. Whereas, gender, and weight class do not affect a boat’s pacing profile. This novel approach of using clustering is able to objectively define four strategies used in 2000 meter rowing competitions. \\par \\textit{\\textbf{Keywords:}} rowing, pacing profiles, k-Shape clustering, multinomial logistic regression, race analysis"
+abstract: "The pacing strategy adopted by an athlete(s) is one of the major determinants of successful performance during timed competition. Various pacing profiles are reported in the literature and its potential to precede a winning performance depends on the mode of sport. However, in 2000 meter rowing, the definition of these pacing profiles has been subjective and there is a need to be more objective with the definition. Our aim is to objectively identify pacing profiles used in World Championship 2000 meter rowing races. To do this the average speed and stroke rate (SR) for each 50 meter split for each boat in every race of the Rowing World Championships from 2010-2017 was Scraped from www.worldrowing.com. Pacing profiles are determined by using k-Shape clustering on the average boat speeds at each 50 meter split. Finally, clusters are described using boat and race descriptors to draw conclusions about who, when and why each pacing profile was observed. A Multinomial Logistic Regression is then fit with Bonferroni corrections used on the tests of significance to test whether variables such as boat size, gender, round, or rank are associated with pacing profiles. Four pacing strategies (Even, Positive, Reverse J-Shaped and U-Shaped) are identified from the clustering process. Boat size, round (Heat vs Finals), rank, gender, and weight class are all found to affect pacing profiles. This novel approach of using clustering is able to objectively define four strategies used in 2000 meter rowing competitions. \\par \\textit{\\textbf{Keywords:}} rowing, pacing profiles, k-Shape clustering, multinomial logistic regression, race analysis"
 #keywords: "rowing, pacing profiles, race analysis, k-Shape clustering"
 date: "`r lubridate::today()`"
 geometry: margin = 1in
@@ -32,7 +32,7 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, out.width='80%', fig.asp=.75, fig.align='center', warning = FALSE)
-pacman::p_load(tidyverse, pander, glue)
+pacman::p_load(tidyverse, pander, glue, toOrdinal)
 
 theme_set(theme_bw())
 theme_update(text = element_text(size = 12), legend.position = "bottom")
@@ -216,7 +216,7 @@ races_clustered %>%
     facet_wrap(~ size_label, scales = "free") +
     coord_flip() +
     ylab("Count") +
-    xlab("Class") +
+    xlab("Pacing Profile") +
     scale_fill_manual(name = "Pacing Profile:", values = colour_palette) +
     theme(axis.text.y = element_blank(),
           axis.title.y = element_blank(),
@@ -227,7 +227,7 @@ An 8 person boat is relatively more liekly to exhibit a "Even" pacing profile th
 
 # Multinomial Logistic Regression
 
-A multinomial logistic regression was fit with pacing profile as a dependent variable on the boat size, race placement in a heat or final, discipline, gender and weight class variables. Below we report the odds ratio for each variable in the model. 
+A multinomial logistic regression was fit with pacing profile as a dependent variable on the boat size, race placement in a heat or final, discipline, gender and weight class variables. To fit the logistic regression model we removed all boats from mixed gender races, junior races, and adaptive races due to lack of races. This left 7306 boats to train the model on. Below we report the odds ratio for each variable in the model. An effect is determined to be a statistically significant different if the p-value from the Wald z-test is smaller than 0.05 divide by 27 (the number of significance tests we are doing). This is from the Bonferonni correction.
 
 ```{r, logistic_regression}
 panderOptions("table.continues", "")
@@ -253,9 +253,43 @@ So if we first look at the value for the "Positive" pacing profile for the size 
 
 Next we can see that holding all other variables constant that the "Positive" pacing profile is nearly 2 times more likely to be used in a heat then a final. This would make sense as boat's that are in heats are more likely to want to conserve their energy for their future races. Interestingly, in rowing there is a rule that disqualifies boats that are not "trying their hardest" throughout the race (NEED CITATION). This shows that boats are using a pacing profile with positive split times in heats but this could be intentional or unitentional.
 
+```{r, heat_or_final_plot, fig.caption = "Distribution of pacing profiles in Heats vs Finals"}
+races_clustered %>%
+  filter(junior == "senior", adaptive == FALSE, gender != "mixed") %>%
+  mutate(size_label = glue("{size} person boat"),
+         heat_or_final = str_to_title(heat_or_final)) %>%
+  ggplot(aes(fill = cluster, x = cluster)) +
+  geom_bar(stat = "count", position = "dodge") +
+    facet_grid(heat_or_final ~ size_label, scales = "free") +
+    coord_flip() +
+    ylab("Count") +
+    xlab("Pacing Profile") +
+    scale_fill_manual(name = "Pacing Profile:", values = colour_palette) +
+    theme(axis.text.y = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks.y = element_blank()) 
+```
+
+This plot that accounts only for size and round shows clearly that boats are more likely to follow "Positive"" pacing profiles in Heats and to use "U-Shaped" pacing profiles in finals. In bigger boats it is clear that the "Even" pcaing profile is still the most used 
+
 ### Race Placement
 
 Next where a boat finished in the race seems to have an effect on the selection of pacing profile. The basline in this case is boats that came in 1st place. The questions is whether this would affect how the boat would pace themselves. There is no significant different between pacing profiles chosen by 1st place and 2nd palce boats. 3rd place boats have a similar distribution but are more likely to have a "U-Shaped" pacing profile. 4th, 5th and 6th place boats have a wildly different distribution of odds to follow a given pacing profile. One explanation could be that in most races, the first 3 boats are the ones to qualify for the next race. It would therefore make sense if they followed a similar distribution of pacing profiles. Unfortunately looking for an interaction between these two variables would require more data than we have available and so we leave this for further investigation.
+
+```{r, rank_plot, fig.caption = "Distribution of pacing profiles for different final placements"}
+races_clustered %>%
+  filter(junior == "senior", adaptive == FALSE, gender != "mixed") %>%
+  mutate(size_label = glue("{size} person boat"),
+         rank_final = map_chr(rank_final, toOrdinal),
+         heat_or_final = str_to_title(heat_or_final)) %>%
+  ggplot(aes(fill = cluster, x = reorder(rank_final, desc(rank_final)))) +
+  geom_bar(stat = "count", position = "dodge") +
+    facet_grid(heat_or_final ~ size_label, scales = "free") +
+    coord_flip() +
+    ylab("Count") +
+    xlab("Placement") +
+    scale_fill_manual(name = "Pacing Profile:", values = colour_palette)
+```
 
 ### Discipline
 
@@ -263,12 +297,46 @@ A boat's disicipline is either called a "Stroke" or a "Sweep". "Stroke" describe
 
 ### Gender
 
-Women were statistically less likely to follow "Even" pacing profiles. 
+Women were statistically less likely to follow "Even" pacing profiles when accounting for the variables included in the model. 
+
+```{r, gender_plot, fig.caption = "Distribution of pacing profiles by gender"}
+races_clustered %>%
+  filter(junior == "senior", adaptive == FALSE, gender != "mixed") %>%
+  mutate(size_label = glue("{size} person boat"),
+         gender = str_to_title(gender)) %>%
+  ggplot(aes(fill = cluster, x = cluster)) +
+  geom_bar(stat = "count", position = "dodge") +
+    facet_grid(gender ~ size_label, scales = "free") +
+    coord_flip() +
+    ylab("Count") +
+    xlab("Pacing Profile") +
+    scale_fill_manual(name = "Pacing Profile:", values = colour_palette) +
+    theme(axis.text.y = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks.y = element_blank()) 
+```
 
 ### Weight Class
 
-The "Open" weight class also saw a different distribution of pacing profiles compared to the "Lightweight" class after acounting for the other variables. Holding the other variables the "Positive" and "Reverse J-Shaped" pacing profile were more likely to be used.
+The "Open" weight class also saw a different distribution of pacing profiles compared to the "Lightweight" class after acounting for the other variables. Holding the other variables constant the "Positive" and "Reverse J-Shaped" pacing profile were more likely to be used.
 
+
+```{r, weight_class_plot, fig.caption = "Distribution of pacing profiles for different weight classes"}
+races_clustered %>%
+  filter(junior == "senior", adaptive == FALSE, gender != "mixed") %>%
+  mutate(size_label = glue("{size} person boat"),
+         weight_class = str_to_title(weight_class)) %>%
+  ggplot(aes(fill = cluster, x = cluster)) +
+  geom_bar(stat = "count", position = "dodge") +
+    facet_grid(weight_class ~ size_label, scales = "free") +
+    coord_flip() +
+    ylab("Count") +
+    xlab("Pacing Profile") +
+    scale_fill_manual(name = "Pacing Profile:", values = colour_palette) +
+    theme(axis.text.y = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks.y = element_blank()) 
+```
 
 # Conclusions
 
@@ -294,6 +362,8 @@ The other contribution of this work is not only the analysis and identification 
 We would like to thank Dr. Dave Clarke for organizing the partnership with CSIP, Chuck Rai for his incredible help with scraping data and Lucas Wu and Kevin Floyd for their consultations on statistics and rowing strategies. We would also like to thank Ron Yurko, Sam Ventura and the Carnegie Mellon Sports Analytics Club for hosting the reproducible research competition that pushed us to make our work reproducible and available to the public. We acknowledge the support of the Natural Sciences and Engineering Research Council of Canada (NSERC) where they support Dani Chu with the Alexander Graham Bell Master's Scholarship.
 
 # Appendix
+
+Note, all plots use a colourblind friendly palette
 
 ```{r, cluster_centroid_plot_3, fig.cap = "Cluster Centroids for k-Shape Clustering with 3 Clusters" }
 cluster_centroids %>%
@@ -330,7 +400,7 @@ cluster_centroids %>%
 
 ---
 nocite: | 
-  @tidyverse, @glue, @lubridate, @dtwclust, @pdftools, @devtools, @remotes, @rJava, @tabulizer, @multidplyr, @R, @knitr, @ggplot2, @pander, @tinytex
+  @tidyverse, @glue, @lubridate, @dtwclust, @pdftools, @devtools, @remotes, @rJava, @tabulizer, @multidplyr, @R, @knitr, @ggplot2, @pander, @tinytex, @dplyr, @stringr, @forcats, @purrr, @toOrdinal
 ...
 
 ```{r citations, include = FALSE}

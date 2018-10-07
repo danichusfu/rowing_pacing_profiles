@@ -75,7 +75,7 @@ A positive pacing profile is one where the athlete's speed decreases through eac
 
 Even pacing profiles are categorized by a relatively small portion of the race spend in the acceleration phase and the majority of the race at a constant pace.
 
-There are 2 sub pacing strategies for Parabolic-Shaped pacing profiles. J-Shaped, Reverse J-shaped and U shaped. In general these strategies follow a parabolic shape where the middle fo the race sees the lowest relative speeds. In the U shape strategy, the start and end of the race see the same relative speed. The J-Shaped strategy has a greater relative speed at the end of the race while the Reverse J-Shaped profiles has a greater relative speed at the start of the race.
+There are 3 sub pacing strategies for Parabolic-Shaped pacing profiles. J-Shaped, Reverse J-shaped and U shaped. In general these strategies follow a parabolic shape where the middle fo the race sees the lowest relative speeds. In the U shape strategy, the start and end of the race see the same relative speed. The J-Shaped strategy has a greater relative speed at the end of the race while the Reverse J-Shaped profiles has a greater relative speed at the start of the race.
 
 The last profile mentioned by Abbiss and Laursen is Variable Pacing. It is a strategy that is used to adapt to changing conditions in the race course, like uphills and downhills in cycling.
 
@@ -93,7 +93,7 @@ To do so we present the following:
 
 # Data Collection
 
-The availability of data in rowing is limited. While some studies have data from ergometric machines [@Kennedy] and others have split time results [@Garland; @Muehlbauer_one; @Muehlbauer_two], there was been limited use of the publicly available GPS race data. This is because the data is not stored in a local easy to use area. 
+The availability of easily usable data in rowing is limited. While some studies have data from ergometric machines [@Kennedy] and others have split time results [@Garland; @Muehlbauer_one; @Muehlbauer_two], there was been limited use of the publicly available GPS race data. This is because the data is not stored in a local, easy to use area. 
 
 GPS data for almost every World Championship race from 2010 to 2017 is available in Portable Document Fomat (PDF) files that are located in the summary of each round of each category of each World Championship. Not only was it previously a long process to download each pdf file, but it was a long manual process to copy and paste the data from each file into a more convenient form. Our data collection process involved writing a bash script to scrape all GPS PDFs, along with Media Start List PDFs and Race Results PDFs from every round of every category of the specified World Championships. This process takes roguhly 25 minutes to run. In total there were 5322 PDFs that were scraped from the website. 1 of these files was a broken link so it left us with 5321 PDF files from the 8 years of World Championships.
 
@@ -122,7 +122,7 @@ This left us with a dataset of 9264 boats' races (rows) and 131 variables.
 
 # Data Filtering and Pre Processing
 
-Before beginning any clustering procedures we needed to clean the data set and keep only the boats' racesthat we wanted to cluster. Some races have GPS data errors where the reported average speed is lower than the true average speed. In other cases the average speed is simply not reported. We remove any boat that has a unreported average speed at any of the split measurements (at every 50 meters) and any boat that saw reported average speed less than 2 meters per second. Additionally, we removed any boats that received "Did not Starts", "Did not Finishes" or "Exclusions". This reduced the number of boats' races from 9264 to 8170.
+Before beginning any clustering procedures we needed to clean the data set and keep only the boats' races that we wanted to cluster. Some races have GPS data errors where the reported average speed is lower than the true average speed. In other cases the average speed is simply not reported. We remove any boat that has a unreported average speed at any of the split measurements (at every 50 meters) and any boat that saw reported average speed less than 2 meters per second. Additionally, we removed any boats that received "Did not Starts", "Did not Finishes" or "Exclusions". This reduced the number of boats' races from 9264 to 8170.
 
 To determine pacing profiles raw speeds at each split are often compared to the mean speed of a boat throughout the race [@Garland]. So we define $x_{i,j}$, as the speed at split $i$ for boat $j$ and normalize to get $y_{i,j}$.
 
@@ -342,7 +342,7 @@ races_clustered %>%
 
 We identified pacing profiles in a more robust specific way.
 
-We found which variables affected the likelihood of following a given pacing profile and by how much
+We found which variables affected the likelihood of following a given pacing profile and by how much.
 
 
 

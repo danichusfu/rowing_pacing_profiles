@@ -87,7 +87,7 @@ To do so we present the following:
 
 1. A github repository with Global Positioning Sytem (GPS), Media Start List, and Race Results data from World Championships from 2010 to 2017. Additionally, we have included the code needed to scrape this data for future years and replicate our process of scraping and extracting the current data.
 
-2. A novel approach of classifying pacing profiles for boats in 200m rowing.
+2. A novel approach of classifying pacing profiles for boats in 2000m rowing.
 
 3. Which race factors affect and do not affect the use of a given pacing profile during an event.
 
@@ -95,7 +95,7 @@ To do so we present the following:
 
 The availability of easily usable data in rowing is limited. While some studies have data from ergometric machines [@Kennedy] and others have split time results [@Garland; @Muehlbauer_one; @Muehlbauer_two], there was been limited use of the publicly available GPS race data. This is because the data is not stored in a local, easy to use area. 
 
-GPS data for almost every World Championship race from 2010 to 2017 is available in Portable Document Fomat (PDF) files that are located in the summary of each round of each category of each World Championship. Not only was it previously a long process to download each pdf file, but it was a long manual process to copy and paste the data from each file into a more convenient form. Our data collection process involved writing a bash script to scrape all GPS PDFs, along with Media Start List PDFs and Race Results PDFs from every round of every category of the specified World Championships. This process takes roguhly 25 minutes to run. In total there were 5322 PDFs that were scraped from the website. 1 of these files was a broken link so it left us with 5321 PDF files from the 8 years of World Championships.
+GPS data for almost every World Championship race from 2010 to 2017 is available in Portable Document Fomat (PDF) files that are located in the summary of each round of each category of each World Championship. Not only was it previously a long process to download each and every pdf file, but it was a long manual process to copy and paste the data from each file into a more convenient form. Our data collection process involved writing a bash script to scrape all GPS PDFs, along with Media Start List PDFs and Race Results PDFs from every round of every category of the specified World Championships. This process takes roughly 25 minutes to run. In total there were 5322 PDFs that were scraped from the website. 1 of these files was a broken link so it left us with 5321 PDF files from the 8 years of World Championships.
 
 ```{r, pdf_per_championship_table}
 tibble(Year = 2010:2017) %>%
@@ -108,7 +108,7 @@ tibble(Year = 2010:2017) %>%
 
 The next step to create our dataset was to extract the information from the PDF files. Some races were missing, one or more of the GPS, Results, or Media Start List data. We did not parse any PDFs for races that were missing a file. This left us with 1,736 unique races over the 8 years of World Championships. We developped 3 separate PDF extractor functions and 1 main pdf extractor driver to parse each PDF and merge together information based on regular expressions and consitent locations of data within the PDFs. This process had to accomodate changes in naming conventions, changes to the location of information and addition of information that occured over the years. 
 
-From the GPS PDF we extract average speeds and strokes per minute for each 50 meter split (sometimes smaller splits in later years) for each boat along with the race date, race nuber, round type, country abbreviation and lane number.
+From the GPS PDF we extract average speeds and strokes per minute for each 50 meter split (sometimes smaller splits in later years) for each boat along with the race date, race number, round type, country abbreviation and lane number.
 
 From the Results PDF we extract the finishing rank, the progression (next race or finishing tournament rank), 500 meter split times, whether the boat "Did not Start", "Did not Finish" or was "Excluded" from the race, the country abbreivation and lane number.
 
@@ -116,7 +116,7 @@ From the Media Start List PDF we extract the names, birthdays and positions of e
 
 We use parallel computing to speed up the process of extracting the information for the 5321 pdfs. Using 4 cores instead of one we see the time to extract files drop from 58 minutes to 24 minutes.
 
-Finally we augment the data by breaking down the race's cateogry abbreviation. We can split each race's category into Weight Class (Light or Open), Gender (Male, Female or Mixed), Size (1, 2, 4, 8), Discipline (Scull or Sweep), Adaptive (True, or False), Adaptive Designation (Arm and Shoulders, Intelectual Disabitliy, Trunk and Arm, Leg Trunk and Arm, or None), Age Group (Junior or Senior), Race Round (Exhibition, Repecharge, Heat, Quarterfinal, Semifinal, or Final) and a Qualifier or Final designation.
+Finally we augment the data by breaking down the race's cateogry abbreviation. We can split each race's category into Weight Class (Light or Open), Gender (Male, Female or Mixed), Size (1, 2, 4, 8), Discipline (Scull or Sweep), Adaptive (True, or False), Adaptive Designation (Arm and Shoulders, Intellectual Disability, Trunk and Arm, Leg Trunk and Arm, or None), Age Group (Junior or Senior), Race Round (Exhibition, Repecharge, Heat, Quarterfinal, Semifinal, or Final) and a Qualifier or Final designation.
 
 This left us with a dataset of 9264 boats' races (rows) and 131 variables.
 
@@ -150,7 +150,7 @@ k-Shape then functions very similarly to the k-means algorithm [@kmeans] in the 
 
 # Clustering Results
 
-We performed k-Shape clustering for k = 3, 4, and 5. We found that k = 4 gave us the most distinct shapes. The k-shape clustering algorithm converges, there is an iteration where cluster memberships do not change, for our given seed. The size of the clusters and average distance between rows in each cluster are reported in Table 2.
+We performed k-Shape clustering for k = 3, 4, and 5. We found that k = 4 gave us the most distinct shapes. The k-shape clustering algorithm converges, which means there is an iteration of the algorithm where cluster memberships do not change, for our given seed. The size of the clusters and average distance between rows in each cluster are reported in Table 2.
 
 
 ```{r, cluster_summary}
@@ -180,11 +180,11 @@ cluster_centroids %>%
 
 We will now name the clusters based on the definitions given by Abbiss [@Abbiss]. 
 
-**Cluster 1** is defined by a slow accelartion to a moderate peak velocity, a slow middle section and a final sprint that almost reaches peak velocity. This coordiantes with the definition of the U-Shaped Pacing profile.
+**Cluster 1** is defined by a slow acceleration to a moderate peak velocity, a slow middle section and a final sprint that almost reaches peak velocity. This coordinates with the definition of the U-Shaped Pacing profile.
 
 **Cluster 2** is defined by a slower acceleration, a smaller peak velocity and a low variance in speed throughout the rest of the race. This aligns with the definition of the Even Pacing profile.
 
-**Cluster 3** is defined by an acceleartion to top speed in the first 150 meters and a decline in speed for every proceeding split. This fits with the definition of the Positive Pacing profile.
+**Cluster 3** is defined by an acceleration to top speed in the first 150 meters and a decline in speed for every proceeding split. This fits with the definition of the Positive Pacing profile.
 
 **Cluster 4** is defined by a quick acceleration to a higher peak velocity, a slower middle portion of the event and finally a faster push to the finish. This matches the definition of the Reverse J-Shaped Pacing profile.
 
@@ -227,7 +227,7 @@ An 8 person boat is relatively more liekly to exhibit a "Even" pacing profile th
 
 # Multinomial Logistic Regression
 
-A multinomial logistic regression was fit with pacing profile as a dependent variable on the boat size, race placement in a heat or final, discipline, gender and weight class variables. To fit the logistic regression model we removed all boats from mixed gender races, junior races, and adaptive races due to lack of races. This left 7306 boats to train the model on. Below we report the odds ratio for each variable in the model. An effect is determined to be a statistically significant different if the p-value from the Wald z-test is smaller than 0.05 divide by 27 (the number of significance tests we are doing). This is from the Bonferonni correction.
+A multinomial logistic regression was fit with pacing profile as a dependent variable on the boat size, race placement in a heat or final, discipline, gender and weight class variables. To fit the logistic regression model we removed all boats from mixed gender races, junior races, and adaptive races due to lack of races. This left 7306 boats to train the model on. Below we report the odds ratio for each variable in the model. An effect is determined to be a statistically significant different if the p-value from the Wald z-test is smaller than 0.05 divided by 27 (the number of significance tests we are doing). This is a test with $\alpha = 0.05$ and a Bonferonni Correction applied so that our global Type II error rate is 0.05.
 
 ```{r, logistic_regression}
 panderOptions("table.continues", "")

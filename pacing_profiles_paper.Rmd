@@ -206,7 +206,7 @@ Now that we have identified and named the profiles. We will shift to examining w
 
 ### Size of Boats
 
-The first factor that we look into is the size of the boats in the race. One could argue that it is a different sport when there is a different number of atheltes in the boat. An 8 person boat requires rhythm and coordination across all 8 members. On the other hand a boat with only 1 athlete has no one else to coordinate with. This gives them more control to change pace at will. We can see that in the plot below that there does seem to be an effect.
+The first factor that we look into is the size of the boats in the race. One could argue that it is a different sport when there is a different number of athletes in the boat. An 8 person boat requires rhythm and coordination across all 8 members. On the other hand a boat with only 1 athlete has no one else to coordinate with. This gives them more control to change pace at will. We can see that in the plot below that there does seem to be an effect.
 
 ```{r, size_of_boat_plot, fig.caption = "Pacing Profiles by Size of boat"}
 races_clustered %>%

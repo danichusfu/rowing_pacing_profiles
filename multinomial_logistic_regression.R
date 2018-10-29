@@ -6,8 +6,8 @@ races_clustered <- read_rds("paper/data/races_clustered.rds")
 
 races_train <- 
   races_clustered %>% 
-  select(-matches("strokes_"), - matches("speed_"), -matches("name"), -matches("birthday")) %>%
-  filter(junior == "senior", adaptive == FALSE, gender != "mixed") %>%
+  select(-matches("strokes_"), -matches("speed_"), -matches("name"), -matches("birthday")) %>%
+  filter(adaptive == FALSE, gender != "mixed") %>%
   unite(round_rank, heat_or_final, rank_final, remove = FALSE) %>%
   mutate_all(as.factor) 
 
@@ -39,7 +39,7 @@ z <- coef(model)/summary(model)$standard.errors
 p <- (1 - pnorm(abs(z), 0, 1)) * 2
 
 relative_odds <- exp(coef(model))
-significance_test <- (0.05/27 > p)
+significance_test <- (0.05/39 > p)
 
 write_rds(relative_odds, "paper/data/relative_odds.rds")
 write_rds(significance_test, "paper/data/significance_test.rds")

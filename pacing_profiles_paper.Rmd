@@ -46,6 +46,16 @@ cluster_centroids <- read_rds("paper/data/cluster_centroids.rds")
 races_clustered   <- read_rds("paper/data/races_clustered.rds")
 relative_odds     <- read_rds("paper/data/relative_odds.rds")
 significance_test <- read_rds("paper/data/significance_test.rds")
+
+races_clustered <-
+  races_clustered %>%
+  mutate(size_label = case_when(size == 1 ~ "Singles",
+                                size == 2 ~ "Doubles",
+                                size == 4 ~ "Quads",
+                                size == 8 ~ "Eights") %>%
+                      fct_reorder(size),
+         rank_final = map_chr(rank_final, toOrdinal),
+         heat_or_final = str_to_title(heat_or_final))
 ```
 
 
@@ -210,7 +220,6 @@ The first factor that we look into is the size of the boats in the race. One cou
 
 ```{r, size_of_boat_plot, fig.caption = "Pacing Profiles by Size of boat"}
 races_clustered %>%
-  mutate(size_label = glue("{size} person boat")) %>%
   ggplot(aes(fill = cluster, x = cluster)) +
   geom_bar(stat = "count", position = "dodge") +
     facet_wrap(~ size_label, scales = "free") +
@@ -220,27 +229,29 @@ races_clustered %>%
     scale_fill_manual(name = "Pacing Profile:", values = colour_palette) +
     theme(axis.text.y = element_blank(),
           axis.title.y = element_blank(),
-          axis.ticks.y = element_blank()) 
+          axis.ticks.y = element_blank()) +
+  ggtitle("Distribution of Pacing Profiles Given Boat Size")
 ```
 
 An 8 person boat is relatively more liekly to exhibit a "Even" pacing profile than a "Positive" pacing profile. What we will do next is try to untangle what boat and race chracteristics affect the pacing profile that a boat exhibits.
 
 # Multinomial Logistic Regression
 
-A multinomial logistic regression was fit with pacing profile as a dependent variable on the boat size, race placement in a heat or final, discipline, gender and weight class variables. To fit the logistic regression model we removed all boats from mixed gender races, junior races, and adaptive races due to lack of races. This left 7306 boats to train the model on. Below we report the odds ratio for each variable in the model. An effect is determined to be a statistically significant different if the p-value from the Wald z-test is smaller than 0.05 divided by 27 (the number of significance tests we are doing). This is a test with $\alpha = 0.05$ and a Bonferonni Correction applied so that our global Type II error rate is 0.05.
+A multinomial logistic regression was fit with pacing profile as a dependent variable on the boat size, race placement in a heat or final, discipline, gender and weight class variables. To fit the logistic regression model we removed all boats from mixed gender races, and adaptive races due to lack of races. This left 8054 boats to train the model on. Below we report the odds ratio for each variable in the model. An effect is determined to be a statistically significant different if the p-value from the Wald z-test is smaller than 0.05 divided by 39 (the number of significance tests we are doing). This is a test with $\alpha = 0.05$ and a Bonferonni Correction applied so that our global Type II error rate is 0.05.
 
 ```{r, logistic_regression}
 panderOptions("table.continues", "")
-emphasize.strong.cells(which(significance_test, arr.ind = TRUE))
+emphasize.strong.cells(which(t(significance_test), arr.ind = TRUE))
 
 relative_odds %>%
   as_tibble(rownames = NA) %>%
-  rename(Intercept = `(Intercept)`, `Size: 2 person` = size2, `Size: 4 person` = size4, 
-         `Size: 8 person` = size8, `Heat or Final: Heat` = heat_or_finalheat, 
+  rename(Intercept = `(Intercept)`, `Size: Doubles` = size2, `Size: Quads` = size4, 
+         `Size: Eights` = size8, `Heat or Final: Heat` = heat_or_finalheat, 
          `Race Placement: 2nd Place` = rank_final2, `Race Placement: 3rd Place` = rank_final3,
          `Race Placement: 4th Place` = rank_final4, `Race Placement: 5th Place` = rank_final5,
          `Race Placement: 6th Place` = rank_final6, `Discipline: Sweep` = disciplinesweep,
          `Gender: Women` = genderwomen, `Weight Class: Open` = weight_classopen) %>%
+  t() %>%
   pander(caption = "Odds ratio changed by each variable holding all others constant, statistically significant entries are bolded")
 
 ```
@@ -255,9 +266,7 @@ Next we can see that holding all other variables constant that the "Positive" pa
 
 ```{r, heat_or_final_plot, fig.caption = "Distribution of pacing profiles in Heats vs Finals"}
 races_clustered %>%
-  filter(junior == "senior", adaptive == FALSE, gender != "mixed") %>%
-  mutate(size_label = glue("{size} person boat"),
-         heat_or_final = str_to_title(heat_or_final)) %>%
+  filter(adaptive == FALSE, gender != "mixed") %>%
   ggplot(aes(fill = cluster, x = cluster)) +
   geom_bar(stat = "count", position = "dodge") +
     facet_grid(heat_or_final ~ size_label, scales = "free") +
@@ -278,10 +287,7 @@ Next where a boat finished in the race seems to have an effect on the selection 
 
 ```{r, rank_plot, fig.caption = "Distribution of pacing profiles for different final placements"}
 races_clustered %>%
-  filter(junior == "senior", adaptive == FALSE, gender != "mixed") %>%
-  mutate(size_label = glue("{size} person boat"),
-         rank_final = map_chr(rank_final, toOrdinal),
-         heat_or_final = str_to_title(heat_or_final)) %>%
+  filter(adaptive == FALSE, gender != "mixed") %>%
   ggplot(aes(fill = cluster, x = reorder(rank_final, desc(rank_final)))) +
   geom_bar(stat = "count", position = "dodge") +
     facet_grid(heat_or_final ~ size_label, scales = "free") +
@@ -301,9 +307,8 @@ Women were statistically less likely to follow "Even" pacing profiles when accou
 
 ```{r, gender_plot, fig.caption = "Distribution of pacing profiles by gender"}
 races_clustered %>%
-  filter(junior == "senior", adaptive == FALSE, gender != "mixed") %>%
-  mutate(size_label = glue("{size} person boat"),
-         gender = str_to_title(gender)) %>%
+  filter(adaptive == FALSE, gender != "mixed") %>%
+  mutate(gender = str_to_title(gender)) %>%
   ggplot(aes(fill = cluster, x = cluster)) +
   geom_bar(stat = "count", position = "dodge") +
     facet_grid(gender ~ size_label, scales = "free") +
@@ -323,9 +328,8 @@ The "Open" weight class also saw a different distribution of pacing profiles com
 
 ```{r, weight_class_plot, fig.caption = "Distribution of pacing profiles for different weight classes"}
 races_clustered %>%
-  filter(junior == "senior", adaptive == FALSE, gender != "mixed") %>%
-  mutate(size_label = glue("{size} person boat"),
-         weight_class = str_to_title(weight_class)) %>%
+  filter(adaptive == FALSE, gender != "mixed") %>%
+  mutate(weight_class = str_to_title(weight_class)) %>%
   ggplot(aes(fill = cluster, x = cluster)) +
   geom_bar(stat = "count", position = "dodge") +
     facet_grid(weight_class ~ size_label, scales = "free") +

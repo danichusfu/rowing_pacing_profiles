@@ -13,7 +13,7 @@ title: "Pacing Profiles in 2000 Meter World Championship Rowing"
 thanks: "Thank you to the CMSAC for hosting this reproudcible research competition. All work should be reproducible and can be replicated by using code in my anonymized for right now github repository"
 author: 
 -  Dani Chu\textsuperscript{1}, Ryan Sheehan\textsuperscript{1}, Ming-Chang Tsai\textsuperscript{2,3} and Jack Davis\textsuperscript{1} \ \small \textsuperscript{1}Department of Statistics and Actuarial Sciences, Simon Fraser University, \textsuperscript{2}Canadian Sport Institue Pacifc, \textsuperscript{3}University of Toronto
-abstract: "The pacing strategy adopted by an athlete(s) is one of the major determinants of successful performance during timed competition. Various pacing profiles are reported in the literature and its potential to precede a winning performance depends on the mode of sport. However, in 2000 meter rowing, the definition of these pacing profiles has been subjective and there is a need to be more objective with the definition. Our aim is to objectively identify pacing profiles used in World Championship 2000 meter rowing races in a reproducible transparent way. To do this the average speed and stroke rate (SR) for each 50 meter split for each boat in every race of the Rowing World Championships from 2010-2017 was Scraped from www.worldrowing.com. This data is made publicly available in order to further the field of rowing research in general. Pacing profiles are then determined by using k-Shape clustering on the average boat speeds at each 50 meter split. Finally, clusters are described using boat and race descriptors to draw conclusions about who, when and why each pacing profile was observed. A Multinomial Logistic Regression is then fit with Bonferroni corrections used on the tests of significance to test whether variables such as boat size, gender, round, or rank are associated with pacing profiles. Four pacing strategies (Even, Positive, Reverse J-Shaped and U-Shaped) are identified from the clustering process. Boat size, round (Heat vs Finals), rank, gender, and weight class are all found to affect pacing profiles. This novel approach of using clustering is able to objectively define four strategies used in 2000 meter rowing competitions. \\par \\textit{\\textbf{Keywords:}} rowing, pacing profiles, k-Shape clustering, multinomial logistic regression, race analysis"
+abstract: "The pacing strategy adopted by an athlete(s) is one of the major determinants of successful performance during timed competition. Various pacing profiles are reported in the literature and its potential to predict a winning performance depends on the mode of sport. However, in 2000 meter rowing, the definition of these pacing profiles has been limited by the use of minimal data. Our aim is to objectively identify pacing profiles used in World Championship 2000 meter rowing races in a reproducible and transparent way. To do this the average speed and stroke rate (SR) for each 50 meter split for each boat in every race of the Rowing World Championships from 2010-2017 was Scraped from www.worldrowing.com. This data is made publicly available in order to further the field of rowing research in general. Pacing profiles are then determined by using k-Shape clustering on the average boat speeds at each 50 meter split. Finally, clusters are described using boat and race descriptors to draw conclusions about who, when and why each pacing profile was observed. A multinomial logistic regression is then fit to test whether variables such as boat size, gender, round, or rank are associated with pacing profiles. Four pacing strategies (Even, Positive, Reverse J-Shaped and U-Shaped) are identified from the clustering process. Boat size, round (Heat vs Finals), rank, gender, and weight class are all found to affect pacing profiles. \\par \\textit{\\textbf{Keywords:}} rowing, pacing profiles, k-Shape clustering, multinomial logistic regression, race analysis"
 #keywords: "rowing, pacing profiles, race analysis, k-Shape clustering"
 date: "`r lubridate::today()`"
 geometry: margin = 1in
@@ -61,33 +61,33 @@ races_clustered <-
 
 # Introduction
 
-Across "closed-loop" design sports, competitions where athlete(s) attempt to complete a set distance in the shortest time [@Abbiss], there have been differnt pacing strategies that have been identified. Most of these pacing strategies have been defined in running and cycling races and an attempt has been made to define these strategies in 2000m rowing [@Muehlbauer_one; @Kennedy; @Muehlbauer_two; @Garland]. However, these attempts approach the problems in different ways and come to different conlclusions. We attempt to standardize the definition of pacing profiles in rowing by using more granual data than other attempts.
+Across "closed-loop" design sports, competitions where athlete(s) attempt to complete a set distance in the shortest time [@Abbiss], there have been differnt pacing strategies that have been identified. Most of these pacing strategies have been defined in running and cycling races and an attempt has been made to define these strategies in 2000m rowing [@Muehlbauer_one; @Kennedy; @Muehlbauer_two; @Garland]. However, these attempts approach the problems in different ways and come to different conlclusions. We attempt to standardize the definition of pacing profiles in rowing by using more granulal data than other attempts.
 
 
 ## Pacing Profiles in Rowing
 
 Determining optimal pacing profiles can be done using ergometric data [@Kennedy] or by using observational data from actual competitions [@Garland; @Muehlbauer_one; @Muehlbauer_two].
 
-In 2003 Kennedy and Bell used simulated rowing and training results to suggest that there was a different optimal race profiles for different genders. They found that a constant pacing profile was optimal for males, and an all-out profile was optimal for females.
+In 2003 Kennedy and Bell used simulated rowing and training results to suggest that there were different optimal race profiles for different genders. They found that a constant pacing profile was optimal for males, and an all-out profile was optimal for females.
 
-In 2004, Garland used observational data from 2000 Olympic, 2001 World Championship and 2001 & 2002 British indoor Rowing Championship competitions. His analysis found that when using 4 time splits measured every 500 meters that men and women show no difference in their observed pacing strategies. Garland eliminated races that showed signs of slowdowns from the analysis. Then Meuhlbauer et. al. in 2010 and Meuhlbauer and Melges in 2011 used the same type of split time data to model pacing profiles. In 2010 they found that gender, round of race (whether race was in qualifying heat or the final race for the category), size of boat, coxed, and sculle did not affect pacing strateiges for the 2008 Olympics. In 2011, they had a different finding that indicated that round of race did effect pacing profiles in World Championship races between 2001 and 2009. They performed these analyses by fitting linear quadratic models to the four time splits.
+In 2004, Garland used observational data from 2000 Olympic, 2001 World Championship and 2001 & 2002 British indoor Rowing Championship competitions. His analysis found that when using 4 time splits measured every 500 meters that men and women show no difference in their observed pacing strategies. Garland eliminated races that showed signs of slowdowns from the analysis. Then Meuhlbauer et al. in 2010 as well as Meuhlbauer and Melges in 2011 used the same type of split time data to model pacing profiles. In 2010 they found that gender, round of race (whether race was in qualifying heat or the final race for the category), size of boat, coxed, and sculle did not affect pacing strateiges for the 2008 Olympics. In 2011, they had a different finding that indicated that round of race did affect pacing profiles in World Championship races between 2001 and 2009. They performed these analyses by fitting linear quadratic models to the four time splits.
 
 
 ## Pacing Profiles in other Closed-Loop Sports
 
-In other races of fixed distance like cycling, and running six pacing profiles have been defined [@Abbiss]. The six profiles are Negative, All-Out, Positive, Even, Parabolic-Shaped, and Variable pacing.
+In other races of fixed distance like cycling, and running six pacing profiles have been defined [@Abbiss]. The six profiles are "negative", "all-out", "positive", "even", "parabolic-shaped", and "variable pacing".
 
 A negative-split pacing profile, is defined by an increase in speed across splits (which result in smaller relative split times as the race progresses) and is often used in middle-distance events.
 
 An All-Out profile is used when the it is believed that energy reserves are best distributed at the start of the race. This is commonly found in shorter events like the 100 meter sprint. This will often result in "negative-split" times in shorter events, and "positive-split" times in longer events.
 
-A positive pacing profile is one where the athlete's speed decreases through each split in the event. This is found often in swimming, where the dive start allows athletes to reach their maximal speed quickly.
+A positive pacing profile is one where the athlete's speed decreases through each split in the event. This is found often in swimming, where the dive start allows athletes to reach their maximum speed quickly.
 
 Even pacing profiles are categorized by a relatively small portion of the race spend in the acceleration phase and the majority of the race at a constant pace.
 
-There are 3 sub pacing strategies for Parabolic-Shaped pacing profiles. J-Shaped, Reverse J-shaped and U shaped. In general these strategies follow a parabolic shape where the middle fo the race sees the lowest relative speeds. In the U shape strategy, the start and end of the race see the same relative speed. The J-Shaped strategy has a greater relative speed at the end of the race while the Reverse J-Shaped profiles has a greater relative speed at the start of the race.
+There are three pacing sub-strategies for Parabolic-Shaped pacing profiles. J-Shaped, Reverse J-shaped and U shaped. In general these strategies follow a parabolic shape where the middle of the race sees the lowest relative speeds. In the U shape strategy, the start and end of the race see the same relative speed. The J-Shaped strategy has a greater relative speed at the end of the race while the Reverse J-Shaped profiles has a greater relative speed at the start of the race.
 
-The last profile mentioned by Abbiss and Laursen is Variable Pacing. It is a strategy that is used to adapt to changing conditions in the race course, like uphills and downhills in cycling.
+The last profile mentioned by Abbiss and Laursen is "Variable Pacing". It is a strategy that is used to adapt to changing conditions in the race course, like uphills and downhills in cycling.
 
 ## Our Approach
 
@@ -95,17 +95,17 @@ The classification of pacing profiles has usually been approached by fitting lin
 
 To do so we present the following:
 
-1. A github repository with Global Positioning Sytem (GPS), Media Start List, and Race Results data from World Championships from 2010 to 2017. Additionally, we have included the code needed to scrape this data for future years and replicate our process of scraping and extracting the current data.
+1. A github repository with Global Positioning Sytem (GPS), Media Start List, and Race Results data from World Championships from 2010 to 2017. Additionally, we have included the code needed to scrape this data for future years and replicate our process of scraping and extracting future data.
 
 2. A novel approach of classifying pacing profiles for boats in 2000m rowing.
 
-3. Which race factors affect and do not affect the use of a given pacing profile during an event.
+3. A summary of the race factors which did or did not have an association with pacing profiles.
 
 # Data Collection
 
 The availability of easily usable data in rowing is limited. While some studies have data from ergometric machines [@Kennedy] and others have split time results [@Garland; @Muehlbauer_one; @Muehlbauer_two], there was been limited use of the publicly available GPS race data. This is because the data is not stored in a local, easy to use area. 
 
-GPS data for almost every World Championship race from 2010 to 2017 is available in Portable Document Fomat (PDF) files that are located in the summary of each round of each category of each World Championship. Not only was it previously a long process to download each and every pdf file, but it was a long manual process to copy and paste the data from each file into a more convenient form. Our data collection process involved writing a bash script to scrape all GPS PDFs, along with Media Start List PDFs and Race Results PDFs from every round of every category of the specified World Championships. This process takes roughly 25 minutes to run. In total there were 5322 PDFs that were scraped from the website. 1 of these files was a broken link so it left us with 5321 PDF files from the 8 years of World Championships.
+GPS data for almost every World Championship race from 2010 to 2017 is available in Portable Document Fomat (PDF) files that are located in the summary of each round of each category of each World Championship. Not only was it previously a long process to download each and every pdf file, but it was a long manual process to copy and paste the data from each file into a more convenient form. Our data collection process involved writing a bash script to scrape all GPS PDFs, along with Media Start List PDFs and Race Results PDFs from every round of every category of the specified World Championships. This process takes roughly 25 minutes to run. In total there were 5322 PDFs that were scraped from the website. Only 1 of these files was a broken link, which left us with 5321 PDF files from the 8 years of World Championships to use.
 
 ```{r, pdf_per_championship_table}
 tibble(Year = 2010:2017) %>%
@@ -116,9 +116,9 @@ tibble(Year = 2010:2017) %>%
   pander(caption = "Number of PDF Files by World Championship Year. The number of races fluctuates by year depending on whether it was an Olympic year, if Paralympic rowing was included and whether Junior World Championships were included.")
 ```
 
-The next step to create our dataset was to extract the information from the PDF files. Some races were missing, one or more of the GPS, Results, or Media Start List data. We did not parse any PDFs for races that were missing a file. This left us with 1,736 unique races over the 8 years of World Championships. We developped 3 separate PDF extractor functions and 1 main pdf extractor driver to parse each PDF and merge together information based on regular expressions and consitent locations of data within the PDFs. This process had to accomodate changes in naming conventions, changes to the location of information and addition of information that occured over the years. 
+The next step to create our dataset was to extract the information from the PDF files. Some races were missing one or more of the GPS, Results, or Media Start List data. We did not parse any PDFs for races that were missing a file. This left us with 1,736 unique races over the 8 years of World Championships. We developped 3 separate PDF extractor functions and 1 main pdf extractor driver to parse each PDF and merge together information based on regular expressions and consitent locations of data within the PDFs. This process had to accomodate changes in naming conventions, changes to the location of information and addition of information that occured over the years. 
 
-From the GPS PDF we extract average speeds and strokes per minute for each 50 meter split (sometimes smaller splits in later years) for each boat along with the race date, race number, round type, country abbreviation and lane number.
+From the GPS PDF we extract average speeds and strokes per minute for each 50 metre split (sometimes smaller splits in later years) for each boat along with the race date, race number, round type, country abbreviation and lane number.
 
 From the Results PDF we extract the finishing rank, the progression (next race or finishing tournament rank), 500 meter split times, whether the boat "Did not Start", "Did not Finish" or was "Excluded" from the race, the country abbreivation and lane number.
 
@@ -130,7 +130,7 @@ Finally we augment the data by breaking down the race's cateogry abbreviation. W
 
 This left us with a dataset of 9264 boats' races (rows) and 131 variables.
 
-# Data Filtering and Pre Processing
+# Data Filtering and Pre-Processing
 
 Before beginning any clustering procedures we needed to clean the data set and keep only the boats' races that we wanted to cluster. Some races have GPS data errors where the reported average speed is lower than the true average speed. In other cases the average speed is simply not reported. We remove any boat that has a unreported average speed at any of the split measurements (at every 50 meters) and any boat that saw reported average speed less than 2 meters per second. Additionally, we removed any boats that received "Did not Starts", "Did not Finishes" or "Exclusions". This reduced the number of boats' races from 9264 to 8170.
 
@@ -144,19 +144,19 @@ This is useful because the magnitude of the speed has been normalized and we can
 
 # Clustering Pacing Profiles
 
-With the boats' races with errors removed and speeds standardize to the same scale we can begin the clustering process. The idea is that we would like to group velocity curves of similar shape together. There is a large literature in clustering and the area of longitudinal clustering is growing. McNicholas and Subedi used a model based clustering approach that uses mixtures of multivariate t-distributions with a linear model for the mean and a modified Cholesky-decomposed covariance structure to cluster gene expressions [@McNicholas]. Additionally, Kumar and Futschik used a soft clustering technique to cluster the shapes of microarray data [@Kumar]. Finally, using UCR time-series datasets [@UCR], a collection of datasets that has been collected to test clustering techniques and improve the clustering techniques that are published, Paparrizos and Gravano developped the k-Shape clustering technique for time series data [@Paparrizos].
+With the boats' races cleaned and speeds standardize to the same scale we can begin the clustering process. The idea is that we would like to group velocity curves of similar shape together. There is a large body of literature in clustering and the area of longitudinal clustering is growing. McNicholas and Subedi used a model-based clustering approach that uses mixtures of multivariate t-distributions with a linear model for the mean and a modified Cholesky-decomposed covariance structure to cluster gene expressions [@McNicholas]. Additionally, Kumar and Futschik used a soft clustering technique to cluster the shapes of microarray data [@Kumar]. Finally, using UCR time-series datasets [@UCR], a collection of datasets that has been collected to test clustering techniques and improve the clustering techniques that are published, Paparrizos and Gravano developped the k-Shape clustering technique for time series data [@Paparrizos].
 
 ## k-Shape Clustering
 
-In k-Shape clustering a new distance method, called "Shape-based distance (SBD)" and a new method for computing centroids. When SBD is evaluated against other distance metrics such as Dynamic Time Warping, it reaches similar error rates on the UCR datasets but much more efficient run times.
+In k-Shape clustering a new distance method, called "Shape-based distance (SBD)" and a new method for computing centroids are used. When SBD is evaluated against other distance metrics such as Dynamic Time Warping, it reaches similar error rates on the UCR datasets but with shorter computation times.
 
-The k-Shape algorithm is implemented in the dtwclust package [@dtwclust]. In it's implementation it normalizes the columns to the same scale. So it takes our $y_{i,j}$ defined above and transforms it to $z_{i,j}$ defined below.
+The k-Shape algorithm is implemented in the dtwclust package [@dtwclust]. In its implementation it normalizes the columns to the same scale. So it takes our $y_{i,j}$ defined above and transforms it to $z_{i,j}$ defined as
 
 \begin{align*}
-    z_{i,j} = \frac{y_{i,j} - \bar{y}_{i}}{\sigma_{i}}
+    z_{i,j} = \frac{y_{i,j} - \bar{y}_{i}}{\sigma_{i}}.
 \end{align*}
 
-k-Shape then functions very similarly to the k-means algorithm [@kmeans] in the way that it uses an interative refinement that minimizes a given distance function.
+A k-Shape algorithm therefore functions very similarly to the k-means algorithm [@kmeans] in the way that it uses an interatively defines clusters to minimize within-cluster distance.
 
 # Clustering Results
 
@@ -165,10 +165,11 @@ We performed k-Shape clustering for k = 3, 4, and 5. We found that k = 4 gave us
 
 ```{r, cluster_summary}
 read_rds("paper/data/cluster_summary.rds") %>%
+  rename(`Average Distance Within` = `Average Distance`) %>%
   pander(caption = "Summary of clusters for k = 4")
 ```
 
-Next to understand what shapes of clusters were found we plot the centroids for each cluster in Figure 1. We can see that while the centroids are similar, that is to be expected as they are all races, there are distinct features that separate them. The centroids are plotted with respected to the normalized speed by race ($y_{i,j}$). Again this is so that we can identify the shape of the pacing curve without the effect of magnitude that size of boat, weight class and other variables would affect.
+Next to understand what shapes of clusters were found we plot the centroids for each cluster in Figure 1. We can see that while the centroids are similar, as exepected in an all-race average, there are distinct features that separate them. The centroids are plotted with respect to the normalized speed by race ($y_{i,j}$). Again this is so that we can identify the shape of the pacing curve without the effect of magnitude that size of boat, weight class and other variables would affect.
 
 
 ```{r, cluster_centroid_facet_4, fig.cap = "Cluster Centroids for k-Shape Clustering with 4 Clusters" }
@@ -190,21 +191,27 @@ cluster_centroids %>%
 
 We will now name the clusters based on the definitions given by Abbiss [@Abbiss]. 
 
-**Cluster 1** is defined by a slow acceleration to a moderate peak velocity, a slow middle section and a final sprint that almost reaches peak velocity. This coordinates with the definition of the U-Shaped Pacing profile.
+**Cluster 1** is defined by a slow acceleration to a moderate peak velocity, a slow middle section, and a final sprint that almost reaches peak velocity. This coordinates with the definition of the U-Shaped Pacing profile.
 
-**Cluster 2** is defined by a slower acceleration, a smaller peak velocity and a low variance in speed throughout the rest of the race. This aligns with the definition of the Even Pacing profile.
+**Cluster 2** is defined by a slower acceleration, a smaller peak velocity, and a low variance in speed throughout the rest of the race. This aligns with the definition of the Even Pacing profile.
 
 **Cluster 3** is defined by an acceleration to top speed in the first 150 meters and a decline in speed for every proceeding split. This fits with the definition of the Positive Pacing profile.
 
-**Cluster 4** is defined by a quick acceleration to a higher peak velocity, a slower middle portion of the event and finally a faster push to the finish. This matches the definition of the Reverse J-Shaped Pacing profile.
+**Cluster 4** is defined by a quick acceleration to a higher peak velocity, a slower middle portion of the event, and finally a faster push to the finish. This matches the definition of the Reverse J-Shaped Pacing profile.
 
 ```{r, all_races_named, fig.cap = "Pacing Profiles for k-Shape Clustering with 4 Clusters"}
 races_plotable %>%
+  mutate(cluster = as_factor(cluster),
+         cluster = fct_relevel(cluster, c("U-Shaped", "Even", "Positive", "Reverse J-Shaped"))) %>%
   ggplot(aes(x = distance, y = speed, colour = cluster, group = row_number)) +
   geom_line(alpha = 0.05) +
   xlab("Distance (m)") +
   ylab("Normalized Speed") +
-  scale_color_manual("Cluster", values = colour_palette) +
+  scale_color_manual("Cluster", 
+                     values = c(colour_palette[4], 
+                                colour_palette[1], 
+                                colour_palette[2], 
+                                colour_palette[3])) +
   facet_wrap(~ cluster)  +
   theme(legend.position = "none")
 ```
@@ -212,11 +219,11 @@ races_plotable %>%
 
 ## Relationship between Boats Descriptors and Pacing Profiles
 
-Now that we have identified and named the profiles. We will shift to examining what boats are more likely to exhibit a specific pacing profile. It is important to note that these comparisons will not indicate what is optimal, nor will it indicate what the boat set out to do before the race started. 
+Now that we have identified and named the profiles. We will shift to examining what boats are more likely to exhibit a specific pacing profile. It is important to note that these comparisons will not indicate what is optimal, nor will it indicate what the rower or rowers intended before the race started. 
 
 ### Size of Boats
 
-The first factor that we look into is the size of the boats in the race. One could argue that it is a different sport when there is a different number of athletes in the boat. An 8 person boat requires rhythm and coordination across all 8 members. On the other hand a boat with only 1 athlete has no one else to coordinate with. This gives them more control to change pace at will. We can see that in the plot below that there does seem to be an effect.
+The first factor that we look into is the size of the boats in the race. One could argue that it is a different sport when there is a different number of athletes in the boat. An 8 person boat requires rhythm and coordination across all 8 members, a 1-person boat does not. The 1-person boat enjoys more control to change pace at will. We can see that in the plot below that there does seem to be an effect.
 
 ```{r, size_of_boat_plot, fig.caption = "Pacing Profiles by Size of boat"}
 races_clustered %>%
@@ -233,11 +240,11 @@ races_clustered %>%
   ggtitle("Distribution of Pacing Profiles Given Boat Size")
 ```
 
-An 8 person boat is relatively more liekly to exhibit a "Even" pacing profile than a "Positive" pacing profile. What we will do next is try to untangle what boat and race chracteristics affect the pacing profile that a boat exhibits.
+An 8-person boat is relatively more liekly to exhibit a "Even" pacing profile than a "Positive" pacing profile. Next we describe the boat and race chracteristics that affect the pacing profile that a boat exhibits.
 
 # Multinomial Logistic Regression
 
-A multinomial logistic regression was fit with pacing profile as a dependent variable on the boat size, race placement in a heat or final, discipline, gender and weight class variables. To fit the logistic regression model we removed all boats from mixed gender races, and adaptive races due to lack of races. This left 8054 boats to train the model on. Below we report the odds ratio for each variable in the model. An effect is determined to be a statistically significant different if the p-value from the Wald z-test is smaller than 0.05 divided by 39 (the number of significance tests we are doing). This is a test with $\alpha = 0.05$ and a Bonferonni Correction applied so that our global Type II error rate is 0.05.
+A multinomial logistic regression was fit with pacing profile as a dependent variable on the boat size, race placement in a heat or final, discipline, gender and weight class variables. To fit the logistic regression model we removed all boats from mixed gender races, and adaptive races due to lack of data. This left 8054 boats on which to train the model on. Below we report the odds ratio for each variable in the model. An effect is determined to be a statistically significant different if the p-value from the Wald z-test is smaller than 0.05 divided by 39 (the number of significance tests we are doing). This is a test with $\alpha = 0.05$ and a Bonferonni Correction applied so that our global Type II error rate is 0.05.
 
 ```{r, logistic_regression}
 panderOptions("table.continues", "")
@@ -258,11 +265,11 @@ relative_odds %>%
 
 To explain how to interpret these numbers we will use the boat size variable as an example. The first thing to note is that there is no results reported for the "Even" pacing profile. This is because it is used as our baseline level. Additionally, there is no column for size 1 boats. This is because the size 1 boats are the baseline for the boat size variable. 
 
-So if we first look at the value for the "Positive" pacing profile for the size 8 boats. The odds that a size 8 boat would follow a "Positive" pacing profile is 0.03 times smaller than the odds that a 1 person boat would follow an "Even" pacing profile holding all other variables constant. We can see that since all odds ratios for the size 8 boats are less than 1 that an 8 person boat is most likely to exhibit an "Even" pacing profile. This aligns with what we saw in the graph.
+So if we first look at the value for the "Positive" pacing profile for the size 8 boats. The odds that a size 8 boat would follow a "Positive" pacing profile is 0.03 times as large as the odds that a 1 person boat would follow an "Even" pacing profile holding all other variables constant. We can see that since all odds ratios for the size 8 boats are less than 1 that an 8 person boat is most likely to exhibit an "Even" pacing profile. This aligns with what we saw in the graph.
 
 ### Round of Race (Heat or Final)
 
-Next we can see that holding all other variables constant that the "Positive" pacing profile is nearly 2 times more likely to be used in a heat then a final. This would make sense as boat's that are in heats are more likely to want to conserve their energy for their future races. Interestingly, in rowing there is a rule that disqualifies boats that are not "trying their hardest" throughout the race (NEED CITATION). This shows that boats are using a pacing profile with positive split times in heats but this could be intentional or unitentional.
+Next we can see that holding all other variables constant that the "Positive" pacing profile is nearly 2 times more likely to be used in a heat then a final. This would make sense as boats that are in heats are more likely to want to conserve their energy for their future races. Interestingly, in rowing there is a rule that disqualifies boats that are not "trying their hardest" throughout the race (NEED CITATION). This shows that boats are using a pacing profile with positive split times in heats but this could be intentional or unitentional.
 
 ```{r, heat_or_final_plot, fig.caption = "Distribution of pacing profiles in Heats vs Finals"}
 races_clustered %>%
@@ -279,11 +286,11 @@ races_clustered %>%
           axis.ticks.y = element_blank()) 
 ```
 
-This plot that accounts only for size and round shows clearly that boats are more likely to follow "Positive"" pacing profiles in Heats and to use "U-Shaped" pacing profiles in finals. In bigger boats it is clear that the "Even" pcaing profile is still the most used 
+This plot that accounts only for size and round, shows that boats are more likely to follow "Positive"" pacing profiles in Heats and to use "U-Shaped" pacing profiles in finals. In bigger boats it is clear that the "Even" pcaing profile is still the most used 
 
 ### Race Placement
 
-Next where a boat finished in the race seems to have an effect on the selection of pacing profile. The basline in this case is boats that came in 1st place. The questions is whether this would affect how the boat would pace themselves. There is no significant different between pacing profiles chosen by 1st place and 2nd palce boats. 3rd place boats have a similar distribution but are more likely to have a "U-Shaped" pacing profile. 4th, 5th and 6th place boats have a wildly different distribution of odds to follow a given pacing profile. One explanation could be that in most races, the first 3 boats are the ones to qualify for the next race. It would therefore make sense if they followed a similar distribution of pacing profiles. Unfortunately looking for an interaction between these two variables would require more data than we have available and so we leave this for further investigation.
+A given boat's placement in the race seems to have an effect on the selection of pacing profile. The basline in this case is boats that came in 1st place. The question's is whether this would affect how the boat would pace themselves. There is no significant difference between pacing profiles chosen by 1st place and 2nd place boats. 3rd place boats have a similar distribution but are more likely to have a "U-Shaped" pacing profile. 4th, 5th and 6th place boats have a wildly different distribution of odds to follow a given pacing profile. One explanation could be that in most races, the first 3 boats are the ones to qualify for the next race. It would therefore make sense if they followed a similar distribution of pacing profiles. Unfortunately looking for an interaction between these two variables would require more data than we have available and so we leave this for further investigation.
 
 ```{r, rank_plot, fig.caption = "Distribution of pacing profiles for different final placements"}
 races_clustered %>%
@@ -303,7 +310,7 @@ A boat's disicipline is either called a "Stroke" or a "Sweep". "Stroke" describe
 
 ### Gender
 
-Women were statistically less likely to follow "Even" pacing profiles when accounting for the variables included in the model. 
+Women were statistically less likely to follow "Even" pacing profiles when accounting for all other variables included in the model. 
 
 ```{r, gender_plot, fig.caption = "Distribution of pacing profiles by gender"}
 races_clustered %>%
@@ -323,7 +330,7 @@ races_clustered %>%
 
 ### Weight Class
 
-The "Open" weight class also saw a different distribution of pacing profiles compared to the "Lightweight" class after acounting for the other variables. Holding the other variables constant the "Positive" and "Reverse J-Shaped" pacing profile were more likely to be used.
+The "Open" weight class also saw a different distribution of pacing profiles compared to the "Lightweight" class after acounting for the other variables. Holding the other variables constant the "Positive" and "Reverse J-Shaped" pacing profiles were more likely to be used.
 
 
 ```{r, weight_class_plot, fig.caption = "Distribution of pacing profiles for different weight classes"}
@@ -344,7 +351,7 @@ races_clustered %>%
 
 # Conclusions
 
-We identified pacing profiles in a more robust specific way.
+We have identified pacing profiles in a more data-driven way than previous work.
 
 We found which variables affected the likelihood of following a given pacing profile and by how much.
 
@@ -352,13 +359,13 @@ We found which variables affected the likelihood of following a given pacing pro
 
 # Future Research
 
-Investigate optimal pacing profiles using testing now that pacing profiles have been identified.
+Investigate optimal pacing profiles using more testing now that pacing profiles have been identified.
 
 Investigate progression of pacing profiles for boats throughout an event.
 
 ## Data Accessibility
 
-The other contribution of this work is not only the analysis and identification of these observed pacing profiles but the data that is now accessible for use in futher research by the open community. We welcome other researchers to not only check over our work but further the field of analytics in rowing by using the rich dataset provided at https://github.com/danichusfu/rowing_pacing_profiles. Not only is the data available in csv format, but the code to scrape the pdfs from www.worldrowing.com, and extract the data from the pdfs. This way the data is avaiable for use and our work can be improved upon to grab more data of interest from the pdfs.
+The other contribution of this work is not only the analysis and identification of these observed pacing profiles but the data that is now accessible for use in futher research by the open community. We welcome other researchers to not only check our work but further the field of analytics in rowing by using the rich dataset provided at https://github.com/danichusfu/rowing_pacing_profiles. Not only is the data available in csv format, but the code to scrape the pdfs from www.worldrowing.com, and extract the data from the pdfs. This way the data is avaiable for use and our work can be improved upon by collecting more data of interest from the pdfs.
 
 
 # Acknowledgements
